@@ -17,7 +17,7 @@ const clientRTU = new ModbusRTU();
 // RTU Initial Setup //
 var MB_COMPORT;
 var MB_BAUDRATE = 38400; 
-var MB_ID;
+var MB_ID = 1;
 var MB_TIMEOUT;
 var gripperData = new Object();
 gripperData.position = new Int16Array([0]);

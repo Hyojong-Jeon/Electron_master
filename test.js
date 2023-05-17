@@ -9,3 +9,10 @@ gripperData.current  = new Int16Array([0]);
 gripperData.position = new Int16Array([Number(abc)]);
 
 console.log("abc",(Number)(gripperData.position));
+
+
+
+ var 플래그 = true;
+if(플래그) {
+    console.log("왜 한글이 되지?");
+}

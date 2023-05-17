@@ -11,18 +11,14 @@ const ModbusRTU = require ("modbus-serial");
 
 // Declaration //
 const clientRTU = new ModbusRTU();
-
 /* -------------------------------------------------------------------- */
 
 // RTU Initial Setup //
-var MB_COMPORT;
-var MB_BAUDRATE = 38400; 
-var MB_ID = 1;
 var MB_TIMEOUT;
 var gripperData = new Object();
 gripperData.position = new Int16Array([0]);
-gripperData.velocity = new Int16Array([0]); 
-gripperData.current  = new Int16Array([0]); 
+gripperData.velocity = new Int16Array([0]);
+gripperData.current  = new Int16Array([0]);
 
 const ENABLE    = 1;
 const STOP_P    = 2;
@@ -56,7 +52,7 @@ const MB_OPEN = function(baudRateVal, comPortVal, modbusID) {
 };
 
 const MB_CLOSE = function() {
-    clientRTU.close(function() {console.log("[" + MB_COMPORT + ' 장치와의 연결이 종료되었습니다.]')});
+    clientRTU.close(function() {console.log("[장치와의 연결이 종료되었습니다.]")});
 };
 
 const MB_SEND = function(values) {
@@ -91,30 +87,39 @@ const MB_READ = function() {
 /* -------------------------------------------------------------------- */
 
 // Others: Electron Function //
+
 function createWindow () {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+  const mainWindow = new BrowserWindow({
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
-  })
+  });
 
-  win.loadFile('index.html')
-};
+  ipcMain.on('connectClient', (event, data) => {
+    const comPort  = data.comPort;
+    const bitRate  = (Number)(data.bitRate);
+    const modbusID = (Number)(data.modbusID);
+    MB_OPEN(bitRate, comPort, modbusID);
+    console.log(data);
+    // console.log(bitRate, comPort, modbusID);
+  });
+
+  ipcMain.on('disconnectClient', (event) => {
+    MB_CLOSE();
+    // console.log(event);
+  });
+
+  mainWindow.loadFile('index.html');
+}
 
 app.whenReady().then(() => {
   createWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  })
-});
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  });
+})
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+app.on('window-all-closed', function () {
+  if (process.platform !== 'darwin') app.quit()
 });

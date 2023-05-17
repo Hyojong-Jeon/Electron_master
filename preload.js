@@ -16,9 +16,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   disconnectClient: () => ipcRenderer.send('disconnectClient'),
   gripperInitialize:() => ipcRenderer.send('gripperInitialize'),
   gripperOpen:() => ipcRenderer.send('gripperOpen'),
-  gripperClose:() => ipcRenderer.send('gripperClose')
+  gripperClose:() => ipcRenderer.send('gripperClose'),
+  gripperPosCtrl:(data) => ipcRenderer.send('gripperPosCtrl', data),
+  writeMBAddress:(data) => ipcRenderer.send('writeMBAddress', data),
+  writeElAngle:() => ipcRenderer.send('writeElAngle'),
+  gripperData:(data) => ipcRenderer.send('gripperData',data)
 });
-
-// contextBridge.exposeInMainWorld('electronAPI', { disconnectClient: (data) => ipcRenderer.send('disconnectClient', data)});
-
-// contextBridge.exposeInMainWorld('electronAPI', { gripperInitialize: () => ipcRenderer.send('gripperInitialize')});

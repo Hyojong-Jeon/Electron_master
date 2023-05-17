@@ -8,7 +8,11 @@ const comPortVal      = document.getElementById("comPort");
 const modbusIDVal     = document.getElementById("modbusID");
 const changeMBAddressVal = document.getElementById("writeMBAddress");
 const changeElAngleVal   = document.getElementById("writeElAngle");
-
+const slider = document.getElementById("grpPosRNG");
+const output = document.getElementById("sliderValue");
+const writeMBAddressBtn = document.getElementById("writeMBAddressBtn");
+const writeElAngleBtn   = document.getElementById("writeElAngleBtn");
+const dataReceive       = document.getElementById("dataReceive");
 
 connectBtn.addEventListener('click', () => { // Connect MODBUS Req.
     const comPort  = comPortVal.value;
@@ -30,3 +34,34 @@ disconnectBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
 gripperInitBtn.addEventListener ('click', () => {window.electronAPI.gripperInitialize()});
 gripperOpenBtn.addEventListener ('click', () => {window.electronAPI.gripperOpen()});
 gripperCloseBtn.addEventListener('click', () => {window.electronAPI.gripperClose()});
+
+writeMBAddressBtn.addEventListener('click', () => {
+    const changeMBAddress = changeMBAddressVal.value;
+    window.electronAPI.writeMBAddress(changeMBAddress);
+});
+
+writeElAngleBtn.addEventListener('click', () => {window.electronAPI.writeElAngle()});
+
+output.innerHTML = slider.value + '%';
+slider.oninput = function() {
+    output.innerHTML = this.value + '%';
+};
+
+slider.onchange = function() {
+    const data = this.value;
+    window.electronAPI.gripperPosCtrl(data);
+};
+
+let intervalID;
+
+dataReceive.onchange = function() {
+    if (dataReceive.checked) {
+        data = {dataRepeat: true};
+        intervalID = setInterval(readData, 100);
+    } else {
+        data = {dataRepeat: false};
+        clearInterval(intervalID);
+    }
+
+    window.electronAPI.gripperData(data);
+};

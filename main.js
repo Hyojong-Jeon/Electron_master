@@ -20,6 +20,8 @@ gripperData.position = new Int16Array([0]);
 gripperData.velocity = new Int16Array([0]);
 gripperData.current  = new Int16Array([0]);
 
+let intervalID;
+
 const ENABLE    = 1;
 const STOP_P    = 2;
 const STOP_V    = 3;
@@ -107,6 +109,46 @@ function createWindow () {
   ipcMain.on('disconnectClient', (event) => {
     MB_CLOSE();
     // console.log(event);
+  });
+
+  ipcMain.on('gripperInitialize', (event) => {
+    MB_SEND([GRP_INIT]);
+  });
+
+  ipcMain.on('gripperOpen', (event) => {
+    MB_SEND([GRP_OPEN]);
+  });
+
+  ipcMain.on('gripperClose', (event) => {
+    MB_SEND([GRP_CLOSE]);
+  });
+
+  ipcMain.on('gripperPosCtrl', (event, data) => {
+    const gripperPosValue = 100*(Number)(data);
+    MB_SEND([GRP_POS_CTRL, gripperPosValue]);
+  });
+
+  ipcMain.on('writeMBAddress', (event, data) => {
+    const MBAddress = (Number)(data);
+    MB_SEND([CHANGE_MB_ID, MBAddress]);
+  });
+
+  ipcMain.on('writeElAngle', (event) => {
+    MB_SEND([CHANGE_EL_ANGLE]);
+  });
+
+  ipcMain.on('gripperData', (event, data) => {
+    const dataRepeat = data.dataRepeat;
+
+    if(dataRepeat == true) {
+      intervalID = setInterval(MB_READ, 100);
+      console.log("[Gripper] Data Send ON");
+    } else {
+      clearInterval(intervalID);
+      console.log("[Gripper] Data Send OFF");
+    }
+
+    MB_SEND([CHANGE_EL_ANGLE]);
   });
 
   mainWindow.loadFile('index.html');

@@ -79,7 +79,3 @@ function readData() {
     grpCur.text = int16Array3[0]+" mA";
 };
 
-ipcRenderer.on('app-ready', () => {
-    const button = document.getElementById('myButton');
-    button.disabled = false; // 버튼 활성화
-  });

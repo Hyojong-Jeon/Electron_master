@@ -20,5 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gripperPosCtrl:(data) => ipcRenderer.send('gripperPosCtrl', data),
   writeMBAddress:(data) => ipcRenderer.send('writeMBAddress', data),
   writeElAngle:() => ipcRenderer.send('writeElAngle'),
-  gripperData:(data) => ipcRenderer.send('gripperData',data)
+  gripperData:(data) => ipcRenderer.send('gripperData', data)
 });
+
+

@@ -65,3 +65,21 @@ dataReceive.onchange = function() {
 
     window.electronAPI.gripperData(data);
 };
+
+function readData() {
+
+
+
+    const grpPos = document.getElementById("grpPos");
+    const grpVel = document.getElementById("grpVel");
+    const grpCur = document.getElementById("grpCur");
+
+    grpPos.text = int16Array1[0]+" deg";
+    grpVel.text = int16Array2[0]+" RPM";
+    grpCur.text = int16Array3[0]+" mA";
+};
+
+ipcRenderer.on('app-ready', () => {
+    const button = document.getElementById('myButton');
+    button.disabled = false; // 버튼 활성화
+  });

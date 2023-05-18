@@ -96,6 +96,7 @@ function createWindow () {
       preload: path.join(__dirname, 'preload.js')
     }
   });
+  mainWindow.loadFile('index.html');
 
   ipcMain.on('connectClient', (event, data) => {
     const comPort  = data.comPort;
@@ -139,6 +140,7 @@ function createWindow () {
 
   ipcMain.on('gripperData', (event, data) => {
     const dataRepeat = data.dataRepeat;
+    console.log(data);
 
     if(dataRepeat == true) {
       intervalID = setInterval(MB_READ, 100);
@@ -149,9 +151,8 @@ function createWindow () {
     }
 
     MB_SEND([CHANGE_EL_ANGLE]);
-  });
 
-  mainWindow.loadFile('index.html');
+  });
 }
 
 app.whenReady().then(() => {

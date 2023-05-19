@@ -13,6 +13,9 @@ const output = document.getElementById("sliderValue");
 const writeMBAddressBtn = document.getElementById("writeMBAddressBtn");
 const writeElAngleBtn   = document.getElementById("writeElAngleBtn");
 const dataReceive       = document.getElementById("dataReceive");
+const motorEnable       = document.getElementById("motorEnable");
+const gripperInitialize = document.getElementById("gripperInitialize");
+const pumpONOFF         = document.getElementById("pumpONOFF");
 
 connectBtn.addEventListener('click', () => { // Connect MODBUS Req.
     const comPort  = comPortVal.value;
@@ -54,6 +57,10 @@ slider.onchange = function() {
 
 let intervalID;
 
+function readData() {
+    window.electronAPI.gripperDataRes();
+};
+
 dataReceive.onchange = function() {
     if (dataReceive.checked) {
         data = {dataRepeat: true};
@@ -62,20 +69,27 @@ dataReceive.onchange = function() {
         data = {dataRepeat: false};
         clearInterval(intervalID);
     }
-
-    window.electronAPI.gripperData(data);
+    window.electronAPI.gripperDataReq(data);
 };
 
-function readData() {
-
-
-
-    const grpPos = document.getElementById("grpPos");
-    const grpVel = document.getElementById("grpVel");
-    const grpCur = document.getElementById("grpCur");
-
-    grpPos.text = int16Array1[0]+" deg";
-    grpVel.text = int16Array2[0]+" RPM";
-    grpCur.text = int16Array3[0]+" mA";
+motorEnable.onchange = function() {
+    if (motorEnable.checked) {
+        checkBox = true;
+    } else {
+        checkBox = false;
+    }
+    window.electronAPI.motorEnable(checkBox);
 };
+
+pumpONOFF.onchange = function() {
+    if (pumpONOFF.checked) {
+        checkBox = true;
+    } else {
+        checkBox = false;
+    }
+    window.electronAPI.pumpONOFF(checkBox);
+};
+
+
+
 

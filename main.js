@@ -14,12 +14,14 @@ const clientRTU = new ModbusRTU();
 /* -------------------------------------------------------------------- */
 
 // RTU Initial Setup //
-var MB_TIMEOUT;
+var MB_TIMEOUT = 1000;
 var gripperData = new Object();
 gripperData.position = new Int16Array([0]);
 gripperData.velocity = new Int16Array([0]);
 gripperData.current  = new Int16Array([0]);
+gripperData.grpPos   = new Int16Array([0]);
 
+let isClientComm = false;
 let intervalID;
 
 const ENABLE    = 1;
@@ -39,52 +41,71 @@ const GRP_INIT     = 101;
 const GRP_OPEN     = 102;
 const GRP_CLOSE    = 103;
 const GRP_POS_CTRL = 104; // 0 ~ 100
+const MB_GRP_INIT2 = 105;
+const MB_VAC_ON    = 106;
+const MB_VAC_OFF   = 107;
 
 // RTU Function Declaration //
-const MB_OPEN = function(baudRateVal, comPortVal, modbusID) {
+function MB_OPEN(baudRateVal, comPortVal, modbusID) {
     clientRTU.setID      (modbusID);
     clientRTU.setTimeout (MB_TIMEOUT);
     clientRTU.connectRTUBuffered (comPortVal, { baudRate: baudRateVal, parity: "none", dataBits: 8, stopBits: 1 })
         .then(function() {
-            console.log("[" + comPortVal + " 장치와 연결되었습니다.]");
+            console.log("[" + comPortVal + " The device has been connected.]");
         })
         .catch(function(e) {
             console.log(e);
         })
-};
+}
 
-const MB_CLOSE = function() {
-    clientRTU.close(function() {console.log("[장치와의 연결이 종료되었습니다.]")});
-};
+function MB_CLOSE() {
+  clientRTU.close(function() {console.log("[The connection with the device has been terminated.]")});
+}
 
-const MB_SEND = function(values) {
-    const START_ADDRESS = 0; // negative values (< 0) have to add 65535 for Modbus registers
+function MB_SEND(values) {
+  const START_ADDRESS = 0; // negative values (< 0) have to add 65535 for Modbus registers
 
+  if (isClientComm) {
+    return false;
+  } else {
     clientRTU.writeRegisters(START_ADDRESS, values)
-        .then(function(d) {
-            console.log("[MODBUS Write Registers", values, d,"]");
-        })
-        .catch(function(e) {
-            console.log("["+e.message+"]");
-        })
-};
+    .then(function(d) {
+        console.log("[MODBUS Write Registers", values, d,"]");
+        isClientComm = false;
+    })
+    .catch(function(e) {
+        console.log("[MB_SEND ERROR: "+e.message+"]");
+        isClientComm = false;
+    })
 
-const MB_READ = function() {
+    return true;
+  }
+}
+
+function MB_READ() {
     // try to read data
     const START_ADDRESS = 11;
-    const DATA_LENGTH = 3;
+    const DATA_LENGTH = 4;
 
-    clientRTU.readHoldingRegisters(START_ADDRESS, DATA_LENGTH)
-        .then(function(data) {
-            gripperData.position = new Int16Array([Number(data.data[0])]);
-            gripperData.current  = new Int16Array([Number(data.data[1])]);
-            gripperData.velocity = new Int16Array([Number(data.data[2])]);
-            console.log( gripperData );
-        })
-        .catch(function(e) {
-            console.log(e);
-        });
-};
+    if (isClientComm) {
+      return;
+    } else {
+      isClientComm = true;
+      clientRTU.readHoldingRegisters(START_ADDRESS, DATA_LENGTH)
+      .then(function(data) {
+          gripperData.position = new Int16Array([Number(data.data[0])]);
+          gripperData.current  = new Int16Array([Number(data.data[1])]);
+          gripperData.velocity = new Int16Array([Number(data.data[2])]);
+          gripperData.grpPos   = new Int16Array([Number(data.data[3])]);
+          // console.log( gripperData );
+          isClientComm = false;
+      })
+      .catch(function(e) {
+          console.log("[MB_READ ERROR: "+e.message+"]");
+          isClientComm = false;
+      });
+    }
+}
 
 /* -------------------------------------------------------------------- */
 
@@ -94,7 +115,9 @@ function createWindow () {
   const mainWindow = new BrowserWindow({
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
-    }
+    },
+    width: 650,
+    height: 800
   });
   mainWindow.loadFile('index.html');
 
@@ -138,20 +161,39 @@ function createWindow () {
     MB_SEND([CHANGE_EL_ANGLE]);
   });
 
-  ipcMain.on('gripperData', (event, data) => {
+  ipcMain.on('gripperDataReq', (event, data) => {
     const dataRepeat = data.dataRepeat;
-    console.log(data);
+    // console.log(data);
 
-    if(dataRepeat == true) {
+    if(dataRepeat) {
       intervalID = setInterval(MB_READ, 100);
       console.log("[Gripper] Data Send ON");
     } else {
       clearInterval(intervalID);
       console.log("[Gripper] Data Send OFF");
     }
+  });
 
-    MB_SEND([CHANGE_EL_ANGLE]);
+  ipcMain.on('gripperDataRes', (event) => {
+    event.reply('asynchronous-reply', gripperData);
+  });
 
+  ipcMain.on('motorEnable', (event, data) => {
+    const checkBox = data;
+    if (checkBox) {
+      MB_SEND([ENABLE]);
+    } else {
+      MB_SEND([DISABLE]);
+    }
+  });
+
+  ipcMain.on('pumpONOFF', (event, data) => {
+    const checkBox = data;
+    if (checkBox) {
+      MB_SEND([MB_VAC_ON]);
+    } else {
+      MB_SEND([MB_VAC_OFF]);
+    }
   });
 }
 

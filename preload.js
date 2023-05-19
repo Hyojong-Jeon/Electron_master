@@ -1,14 +1,3 @@
-// window.addEventListener('DOMContentLoaded', () => {
-//     const replaceText = (selector, text) => {
-//       const element = document.getElementById(selector)
-//       if (element) element.innerText = text
-//     }
-
-//     for (const type of ['chrome', 'node', 'electron']) {
-//       replaceText(`${type}-version`, process.versions[type])
-//     }
-//   })
-
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -20,7 +9,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gripperPosCtrl:(data) => ipcRenderer.send('gripperPosCtrl', data),
   writeMBAddress:(data) => ipcRenderer.send('writeMBAddress', data),
   writeElAngle:() => ipcRenderer.send('writeElAngle'),
-  gripperData:(data) => ipcRenderer.send('gripperData', data)
+  gripperDataReq:(data) => ipcRenderer.send('gripperDataReq', data),
+  gripperDataRes:() => ipcRenderer.send('gripperDataRes'),
+  motorEnable: (data) => ipcRenderer.send('motorEnable', data),
+  pumpONOFF: (data) => ipcRenderer.send('pumpONOFF', data),
 });
 
+ipcRenderer.on('asynchronous-reply', (event, arg) => {
+  // console.log(arg)
+  const grpPos = document.getElementById("grpPos");
+  const grpVel = document.getElementById("grpVel");
+  const grpCur = document.getElementById("grpCur");
 
+  grpPos.text = arg.position[0]+" deg";
+  grpVel.text = arg.velocity[0]+" RPM";
+  grpCur.text = arg.current[0]+" mA";
+});

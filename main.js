@@ -8,13 +8,14 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const ModbusRTU = require ("modbus-serial");
+const SerialPort = require('serialport');
 
 // Declaration //
 const clientRTU = new ModbusRTU();
 /* -------------------------------------------------------------------- */
 
 // RTU Initial Setup //
-var MB_TIMEOUT = 1000;
+var MB_TIMEOUT = 100;
 var gripperData = new Object();
 gripperData.position = new Int16Array([0]);
 gripperData.velocity = new Int16Array([0]);
@@ -45,17 +46,56 @@ const MB_GRP_INIT2 = 105;
 const MB_VAC_ON    = 106;
 const MB_VAC_OFF   = 107;
 
+function checkUSBConnection() {
+  SerialPort.list()
+    .then(ports => {
+      // 연결된 모든 시리얼 포트 확인
+      const connectedPorts = ports.filter(port => port.manufacturer === "Your Device Manufacturer");
+      if (connectedPorts.length > 0) {
+        console.log("USB 장치가 연결되었습니다.");
+        // 여기에 연결된 장치 처리 로직 추가
+      } else {
+        console.log("USB 장치가 연결되지 않았습니다.");
+        // 여기에 연결되지 않은 장치 처리 로직 추가
+      }
+    })
+    .catch(error => {
+      console.error("USB 연결 상태 확인 중 에러:", error);
+    });
+}
+
+// 1초마다 USB 연결 상태 확인
+// setInterval(checkUSBConnection, 1000);
+
+
 // RTU Function Declaration //
 function MB_OPEN(baudRateVal, comPortVal, modbusID) {
-    clientRTU.setID      (modbusID);
-    clientRTU.setTimeout (MB_TIMEOUT);
-    clientRTU.connectRTUBuffered (comPortVal, { baudRate: baudRateVal, parity: "none", dataBits: 8, stopBits: 1 })
-        .then(function() {
-            console.log("[" + comPortVal + " The device has been connected.]");
-        })
-        .catch(function(e) {
-            console.log(e);
-        })
+  clientRTU.setID      (modbusID);
+  clientRTU.setTimeout (MB_TIMEOUT);
+  clientRTU.connectRTUBuffered (comPortVal, { baudRate: baudRateVal, parity: "none", dataBits: 8, stopBits: 1 })
+      .then(function() {
+          console.log("[" + comPortVal + " The device has been connected.]");
+      })
+      .catch(function(e) {
+          console.log(e);
+      })
+
+// 사용 중인 모든 포트 가져오기
+// SerialPort.list().then(ports => {
+//   const comPort = 'COM1'; // 확인하고자 하는 포트
+
+//   // 포트 목록에서 확인하려는 포트 찾기
+//   const portInUse = ports.some(port => port.path === comPort);
+
+//   if (portInUse) {
+//     console.log(`${comPort}는 이미 사용 중입니다.`);
+//   } else {
+//     console.log(`${comPort}는 사용 가능합니다.`);
+//   }
+// }).catch(error => {
+//   console.error('COM 포트 확인 중 오류가 발생했습니다:', error);
+// });
+
 }
 
 function MB_CLOSE() {
@@ -63,6 +103,29 @@ function MB_CLOSE() {
 }
 
 function MB_SEND(values) {
+  // 재시도 메커니즘
+  // const MAX_RETRY = 3;
+  // let retryCount = 0;
+
+  // async function performWriteRegisters() {
+  //   try {
+  //     await client.writeRegisters(address, values);
+  //     console.log("통신 성공");
+  //   } catch (error) {
+  //     console.error("통신 실패:", error);
+  //     if (retryCount < MAX_RETRY) {
+  //       retryCount++;
+  //       console.log(`재시도 (${retryCount}/${MAX_RETRY})`);
+  //       await performWriteRegisters();
+  //     } else {
+  //       console.error("재시도 횟수 초과");
+  //       // 재시도 횟수 초과에 대한 예외 처리
+  //     }
+  //   }
+  // }
+
+  // performWriteRegisters();
+
   const START_ADDRESS = 0; // negative values (< 0) have to add 65535 for Modbus registers
 
   if (isClientComm) {

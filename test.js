@@ -1,18 +1,28 @@
-var gripperData = {};
+const { SerialPort } = require('serialport')
 
-var abc = '40000';
+SerialPort.list()
+.then (ports => {
+    const compPortNum = ports.length;
+    if (compPortNum === 0) {
+        console.log('No comport');
+    } else if (compPortNum > 0) {
+        let array = [];
+        for (let i = 0; i < compPortNum; i++) {
+            array[i] = ports[i].path;
+            // console.log(array[i]);
+        }
+    } else {
+        console.log('Comport length error');
+    }
+})
+.catch(err => {
+    console.log(err)
+});
 
-gripperData.position = new Int16Array([2]);
-gripperData.velocity = new Int16Array([0]);
-gripperData.current  = new Int16Array([0]);
+const arr = [[1, 2], [4], [5, 6]];
 
-gripperData.position = new Int16Array([Number(abc)]);
-
-console.log("abc",(Number)(gripperData.position));
-
-
-
- var 플래그 = true;
-if(플래그) {
-    console.log("왜 한글이 되지?");
-}
+arr.shift();
+arr.shift();
+console.log(arr[0]); // [1, 2]
+arr.push([10,11]);
+console.log(arr); // [1, 2]

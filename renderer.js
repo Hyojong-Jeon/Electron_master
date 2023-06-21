@@ -64,7 +64,7 @@ function readData() {
 dataReceive.onchange = function() {
     if (dataReceive.checked) {
         data = {dataRepeat: true};
-        intervalID = setInterval(readData, 100);
+        intervalID = setInterval(readData, 200);
     } else {
         data = {dataRepeat: false};
         clearInterval(intervalID);

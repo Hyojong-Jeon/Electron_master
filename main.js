@@ -8,23 +8,28 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const ModbusRTU = require ("modbus-serial");
-const SerialPort = require('serialport');
+const { SerialPort } = require('serialport');
 
 // Declaration //
 const clientRTU = new ModbusRTU();
 /* -------------------------------------------------------------------- */
-
 // RTU Initial Setup //
-var MB_TIMEOUT = 100;
+const MB_TIMEOUT = 50;
+const MB_INTERVAL = 100;
+const SYS_CLOCK = 10;
+
+let sysClockCnt = 0;
+let MB_READ_ON = false;
+let MB_SEND_BUFFER = [];
+let intervalID;
+
 var gripperData = new Object();
 gripperData.position = new Int16Array([0]);
 gripperData.velocity = new Int16Array([0]);
 gripperData.current  = new Int16Array([0]);
 gripperData.grpPos   = new Int16Array([0]);
 
-let isClientComm = false;
-let intervalID;
-
+//** DATC-EMD MODBUS COMM **/
 const ENABLE    = 1;
 const STOP_P    = 2;
 const STOP_V    = 3;
@@ -45,28 +50,52 @@ const GRP_POS_CTRL = 104; // 0 ~ 100
 const MB_GRP_INIT2 = 105;
 const MB_VAC_ON    = 106;
 const MB_VAC_OFF   = 107;
+//** DATC-EMD MODBUS COMM **/
+
+setInterval(systemInterrupt, SYS_CLOCK);
+
+function systemInterrupt() {
+  // MODBUS READ TIMING //
+  if (sysClockCnt % 10 === 0) {
+    if (MB_READ_ON === true) {
+      MB_READ();
+    }
+  }
+
+  // MODBUS SEND TIMING //
+  if (sysClockCnt % 10 === 5) {
+    if (MB_SEND_BUFFER.length > 0) {
+      MB_SEND(MB_SEND_BUFFER[0]);
+      MB_SEND_BUFFER.shift();
+    }
+  }
+
+  sysClockCnt++;
+  if (sysClockCnt > 99) {
+    sysClockCnt = 0;
+  }
+}
 
 function checkUSBConnection() {
   SerialPort.list()
     .then(ports => {
-      // 연결된 모든 시리얼 포트 확인
-      const connectedPorts = ports.filter(port => port.manufacturer === "Your Device Manufacturer");
-      if (connectedPorts.length > 0) {
-        console.log("USB 장치가 연결되었습니다.");
-        // 여기에 연결된 장치 처리 로직 추가
+      const compPortNum = ports.length;
+      if (compPortNum === 0) {
+          console.log('NO USB COMPORT');
+      } else if (compPortNum > 0) {
+          let array = [];
+          for (let i = 0; i < compPortNum; i++) {
+              array[i] = ports[i].path;
+              // console.log(array[i]);
+          }
       } else {
-        console.log("USB 장치가 연결되지 않았습니다.");
-        // 여기에 연결되지 않은 장치 처리 로직 추가
+          console.log('Comport length error');
       }
     })
     .catch(error => {
-      console.error("USB 연결 상태 확인 중 에러:", error);
+      console.error("USB connection error occured:", error);
     });
 }
-
-// 1초마다 USB 연결 상태 확인
-// setInterval(checkUSBConnection, 1000);
-
 
 // RTU Function Declaration //
 function MB_OPEN(baudRateVal, comPortVal, modbusID) {
@@ -79,23 +108,6 @@ function MB_OPEN(baudRateVal, comPortVal, modbusID) {
       .catch(function(e) {
           console.log(e);
       })
-
-// 사용 중인 모든 포트 가져오기
-// SerialPort.list().then(ports => {
-//   const comPort = 'COM1'; // 확인하고자 하는 포트
-
-//   // 포트 목록에서 확인하려는 포트 찾기
-//   const portInUse = ports.some(port => port.path === comPort);
-
-//   if (portInUse) {
-//     console.log(`${comPort}는 이미 사용 중입니다.`);
-//   } else {
-//     console.log(`${comPort}는 사용 가능합니다.`);
-//   }
-// }).catch(error => {
-//   console.error('COM 포트 확인 중 오류가 발생했습니다:', error);
-// });
-
 }
 
 function MB_CLOSE() {
@@ -103,46 +115,17 @@ function MB_CLOSE() {
 }
 
 function MB_SEND(values) {
-  // 재시도 메커니즘
-  // const MAX_RETRY = 3;
-  // let retryCount = 0;
-
-  // async function performWriteRegisters() {
-  //   try {
-  //     await client.writeRegisters(address, values);
-  //     console.log("통신 성공");
-  //   } catch (error) {
-  //     console.error("통신 실패:", error);
-  //     if (retryCount < MAX_RETRY) {
-  //       retryCount++;
-  //       console.log(`재시도 (${retryCount}/${MAX_RETRY})`);
-  //       await performWriteRegisters();
-  //     } else {
-  //       console.error("재시도 횟수 초과");
-  //       // 재시도 횟수 초과에 대한 예외 처리
-  //     }
-  //   }
-  // }
-
-  // performWriteRegisters();
-
   const START_ADDRESS = 0; // negative values (< 0) have to add 65535 for Modbus registers
 
-  if (isClientComm) {
-    return false;
-  } else {
     clientRTU.writeRegisters(START_ADDRESS, values)
     .then(function(d) {
         console.log("[MODBUS Write Registers", values, d,"]");
-        isClientComm = false;
     })
     .catch(function(e) {
         console.log("[MB_SEND ERROR: "+e.message+"]");
-        isClientComm = false;
     })
 
     return true;
-  }
 }
 
 function MB_READ() {
@@ -150,10 +133,6 @@ function MB_READ() {
     const START_ADDRESS = 11;
     const DATA_LENGTH = 4;
 
-    if (isClientComm) {
-      return;
-    } else {
-      isClientComm = true;
       clientRTU.readHoldingRegisters(START_ADDRESS, DATA_LENGTH)
       .then(function(data) {
           gripperData.position = new Int16Array([Number(data.data[0])]);
@@ -161,13 +140,10 @@ function MB_READ() {
           gripperData.velocity = new Int16Array([Number(data.data[2])]);
           gripperData.grpPos   = new Int16Array([Number(data.data[3])]);
           // console.log( gripperData );
-          isClientComm = false;
       })
       .catch(function(e) {
           console.log("[MB_READ ERROR: "+e.message+"]");
-          isClientComm = false;
       });
-    }
 }
 
 /* -------------------------------------------------------------------- */
@@ -199,29 +175,29 @@ function createWindow () {
   });
 
   ipcMain.on('gripperInitialize', (event) => {
-    MB_SEND([GRP_INIT]);
+    MB_SEND_BUFFER.push([GRP_INIT]);
   });
 
   ipcMain.on('gripperOpen', (event) => {
-    MB_SEND([GRP_OPEN]);
+    MB_SEND_BUFFER.push([GRP_OPEN]);
   });
 
   ipcMain.on('gripperClose', (event) => {
-    MB_SEND([GRP_CLOSE]);
+    MB_SEND_BUFFER.push([GRP_CLOSE]);
   });
 
   ipcMain.on('gripperPosCtrl', (event, data) => {
     const gripperPosValue = 100*(Number)(data);
-    MB_SEND([GRP_POS_CTRL, gripperPosValue]);
+    MB_SEND_BUFFER.push([GRP_POS_CTRL, gripperPosValue]);
   });
 
   ipcMain.on('writeMBAddress', (event, data) => {
     const MBAddress = (Number)(data);
-    MB_SEND([CHANGE_MB_ID, MBAddress]);
+    MB_SEND_BUFFER.push([CHANGE_MB_ID, MBAddress]);
   });
 
   ipcMain.on('writeElAngle', (event) => {
-    MB_SEND([CHANGE_EL_ANGLE]);
+    MB_SEND_BUFFER.push([CHANGE_EL_ANGLE]);
   });
 
   ipcMain.on('gripperDataReq', (event, data) => {
@@ -229,10 +205,12 @@ function createWindow () {
     // console.log(data);
 
     if(dataRepeat) {
-      intervalID = setInterval(MB_READ, 100);
+      // intervalID = setInterval(MB_READ, MB_INTERVAL);
+      MB_READ_ON = true;
       console.log("[Gripper] Data Send ON");
     } else {
-      clearInterval(intervalID);
+      // clearInterval(intervalID);
+      MB_READ_ON = false;
       console.log("[Gripper] Data Send OFF");
     }
   });
@@ -244,18 +222,18 @@ function createWindow () {
   ipcMain.on('motorEnable', (event, data) => {
     const checkBox = data;
     if (checkBox) {
-      MB_SEND([ENABLE]);
+      MB_SEND_BUFFER.push([ENABLE]);
     } else {
-      MB_SEND([DISABLE]);
+      MB_SEND_BUFFER.push([DISABLE]);
     }
   });
 
   ipcMain.on('pumpONOFF', (event, data) => {
     const checkBox = data;
     if (checkBox) {
-      MB_SEND([MB_VAC_ON]);
+      MB_SEND_BUFFER.push([MB_VAC_ON]);
     } else {
-      MB_SEND([MB_VAC_OFF]);
+      MB_SEND_BUFFER.push([MB_VAC_OFF]);
     }
   });
 }

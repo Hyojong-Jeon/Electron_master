@@ -18,18 +18,23 @@ const MB_TIMEOUT = 50;
 const MB_INTERVAL = 100;
 const SYS_CLOCK = 10;
 
+let MB_PORT_OPENED = false;
 let sysClockCnt = 0;
 let MB_READ_ON = false;
 let MB_SEND_BUFFER = [];
-let intervalID;
 
 var gripperData = new Object();
 gripperData.position = new Int16Array([0]);
 gripperData.velocity = new Int16Array([0]);
 gripperData.current  = new Int16Array([0]);
 gripperData.grpPos   = new Int16Array([0]);
+gripperData.faultNow = new Int16Array([0]);
+gripperData.faultOccurred = new Int16Array([0]);
+gripperData.Vbus = new Int16Array([0]);
 
-//** DATC-EMD MODBUS COMM **/
+var listCOMPort = [];
+
+//** DATC-EMD MODBUS COMMAND **/
 const ENABLE    = 1;
 const STOP_P    = 2;
 const STOP_V    = 3;
@@ -46,11 +51,11 @@ const GRP_SET_DIR  = 100;
 const GRP_INIT     = 101;
 const GRP_OPEN     = 102;
 const GRP_CLOSE    = 103;
-const GRP_POS_CTRL = 104; // 0 ~ 100
+const GRP_POS_CTRL = 104; // 0 ~ 100%
 const MB_GRP_INIT2 = 105;
 const MB_VAC_ON    = 106;
 const MB_VAC_OFF   = 107;
-//** DATC-EMD MODBUS COMM **/
+//** DATC-EMD MODBUS COMMAND **/
 
 setInterval(systemInterrupt, SYS_CLOCK);
 
@@ -70,6 +75,10 @@ function systemInterrupt() {
     }
   }
 
+  if (sysClockCnt % 100 === 1) {
+    checkUSBConnection();
+  }
+
   sysClockCnt++;
   if (sysClockCnt > 99) {
     sysClockCnt = 0;
@@ -83,10 +92,11 @@ function checkUSBConnection() {
       if (compPortNum === 0) {
           console.log('NO USB COMPORT');
       } else if (compPortNum > 0) {
-          let array = [];
+          listCOMPort.length = 0;
           for (let i = 0; i < compPortNum; i++) {
-              array[i] = ports[i].path;
-              // console.log(array[i]);
+            // listCOMPort[i] = ports[i].path;
+            listCOMPort[i] = ports[i].friendlyName;
+            // console.log(listCOMPort[i]);
           }
       } else {
           console.log('Comport length error');
@@ -131,7 +141,7 @@ function MB_SEND(values) {
 function MB_READ() {
     // try to read data
     const START_ADDRESS = 11;
-    const DATA_LENGTH = 4;
+    const DATA_LENGTH = 7;
 
       clientRTU.readHoldingRegisters(START_ADDRESS, DATA_LENGTH)
       .then(function(data) {
@@ -139,6 +149,9 @@ function MB_READ() {
           gripperData.current  = new Int16Array([Number(data.data[1])]);
           gripperData.velocity = new Int16Array([Number(data.data[2])]);
           gripperData.grpPos   = new Int16Array([Number(data.data[3])]);
+          gripperData.faultNow   = new Int16Array([Number(data.data[4])]);
+          gripperData.faultOccurred   = new Int16Array([Number(data.data[5])]);
+          gripperData.Vbus   = new Int16Array([Number(data.data[6])]);
           // console.log( gripperData );
       })
       .catch(function(e) {
@@ -164,13 +177,43 @@ function createWindow () {
     const comPort  = data.comPort;
     const bitRate  = (Number)(data.bitRate);
     const modbusID = (Number)(data.modbusID);
-    MB_OPEN(bitRate, comPort, modbusID);
-    console.log(data);
+    // MB_OPEN(bitRate, comPort, modbusID);
+
+    if (MB_PORT_OPENED === false) {
+      clientRTU.setID      (modbusID);
+      clientRTU.setTimeout (MB_TIMEOUT);
+      clientRTU.connectRTUBuffered (comPort, { baudRate: bitRate, parity: "none", dataBits: 8, stopBits: 1 })
+          .then(function() {
+              console.log("[" + comPort + " The device has been connected.]");
+              event.reply('connectClient-reply', "[" + comPort + " The device has been connected.]");
+              MB_PORT_OPENED = true;
+          })
+          .catch(function(e) {
+              console.log(e);
+              event.reply('connectClient-reply', e);
+          })
+    } else {
+      let message = "The port already opened";
+      console.log(message);
+      event.reply('connectClient-reply', message);
+    }
+
+    // console.log(data);
     // console.log(bitRate, comPort, modbusID);
+    // event.reply('connectClient-reply', data);
   });
 
   ipcMain.on('disconnectClient', (event) => {
-    MB_CLOSE();
+    if (MB_PORT_OPENED === true) {
+      clientRTU.close(function() {console.log("[The connection with the device has been terminated.]")});
+      event.reply('connectClient-reply', "[The connection with the device has been terminated.]");
+      MB_PORT_OPENED = false;
+    } else {
+      let message = "The port already closed";
+      console.log(message);
+      event.reply('connectClient-reply', message);
+    }
+    // MB_CLOSE();
     // console.log(event);
   });
 
@@ -205,11 +248,9 @@ function createWindow () {
     // console.log(data);
 
     if(dataRepeat) {
-      // intervalID = setInterval(MB_READ, MB_INTERVAL);
       MB_READ_ON = true;
       console.log("[Gripper] Data Send ON");
     } else {
-      // clearInterval(intervalID);
       MB_READ_ON = false;
       console.log("[Gripper] Data Send OFF");
     }
@@ -217,6 +258,10 @@ function createWindow () {
 
   ipcMain.on('gripperDataRes', (event) => {
     event.reply('asynchronous-reply', gripperData);
+  });
+
+  ipcMain.on('findPortClient', (event) => {
+    event.reply('findPort-reply', listCOMPort);
   });
 
   ipcMain.on('motorEnable', (event, data) => {

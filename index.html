@@ -70,9 +70,12 @@
                       <label for="comPort">MODBUS Address</label>
                       <input style="width: 100px; text-align: center; margin: 1% 1%;" value="1" type="text" id="modbusID">
                     </div>
+                    <button id='findPort' type="button" class="btn btn-outline-dark" style="width: 23%">Find Port</button>
                     <button id='connectBtn' type="button" class="btn btn-outline-dark" style="width: 23%">Connect</button>
                     <button id='disconnectBtn' type="button" class="btn btn-outline-dark" style="width: 23%">Disonnect</button>
-                    <p class="card-text" style="margin: 1% 0%; font-size: 14px;"><b>에러 메세지 업데이트</b></p>
+                    <div>
+                      <a id = 'portMessages' style="margin: 1% 0%; font-size: 14px;">에러 메세지 업데이트</a>
+                    </div>
                     <p class="card-text" style="margin: 1% 0%; font-size: 12px;">작성예시- Bit rate: 38400, USB 포트: COM6</p>
                   </div>
                 </div>
@@ -130,6 +133,16 @@
                             <td align="Right">Current</td>
                             <td align="center"><a id="grpCur">0 mA</a></td>
                           </tr>
+                          <tr>
+                            <td align="left">
+                              <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="temp" >
+                                <label class="form-check-label" for="pumpONOFF">Temp</label>
+                              </div>
+                            </td>
+                            <td align="Right">GripperPos</td>
+                            <td align="center"><a id="grpPos2">0 %</a></td>
+                          </tr>
                           <!-- 데이터는 서버에서 동적으로 생성됩니다. -->
                         </tbody>
                       </table>
@@ -158,6 +171,18 @@
                   <div class="card-body">
                     <h5 class="card-title"><b>Gripper Setup</b></h5>
                     <p class="card-text">* 모드버스 슬레이브 ID 변경 및 전기각 수정</p>
+                    <div>
+                      <label>STM Fault Now Value</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="0" type="text" id="faultNow">
+                    </div>
+                    <div>
+                      <label>STM Fault Occurred Value</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="0" type="text" id="faultOccurred">
+                    </div>
+                    <div>
+                      <label>Bus Voltage Value</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="0 V" type="text" id="busVoltage">
+                    </div>
                     <div>
                       <label>MODBUS Slave ID</label>
                       <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="1" type="text" id="writeMBAddress">

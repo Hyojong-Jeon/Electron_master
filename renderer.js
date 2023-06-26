@@ -1,3 +1,4 @@
+const findPort        = document.getElementById("findPort");
 const connectBtn      = document.getElementById("connectBtn");
 const disconnectBtn   = document.getElementById("disconnectBtn");
 const gripperInitBtn  = document.getElementById("gripperInitBtn");
@@ -16,6 +17,11 @@ const dataReceive       = document.getElementById("dataReceive");
 const motorEnable       = document.getElementById("motorEnable");
 const gripperInitialize = document.getElementById("gripperInitialize");
 const pumpONOFF         = document.getElementById("pumpONOFF");
+const portMessages      = document.getElementById("portMessages");
+
+findPort.addEventListener('click', () => { // Connect MODBUS Req.
+    window.electronAPI.findPortClient();
+});
 
 connectBtn.addEventListener('click', () => { // Connect MODBUS Req.
     const comPort  = comPortVal.value;
@@ -64,7 +70,7 @@ function readData() {
 dataReceive.onchange = function() {
     if (dataReceive.checked) {
         data = {dataRepeat: true};
-        intervalID = setInterval(readData, 200);
+        intervalID = setInterval(readData, 100);
     } else {
         data = {dataRepeat: false};
         clearInterval(intervalID);

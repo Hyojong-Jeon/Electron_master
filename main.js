@@ -75,7 +75,7 @@ function systemInterrupt() {
     }
   }
 
-  if (sysClockCnt % 100 === 1) {
+  if (sysClockCnt % 100 === 99) {
     checkUSBConnection();
   }
 
@@ -149,9 +149,9 @@ function MB_READ() {
           gripperData.current  = new Int16Array([Number(data.data[1])]);
           gripperData.velocity = new Int16Array([Number(data.data[2])]);
           gripperData.grpPos   = new Int16Array([Number(data.data[3])]);
-          gripperData.faultNow   = new Int16Array([Number(data.data[4])]);
-          gripperData.faultOccurred   = new Int16Array([Number(data.data[5])]);
-          gripperData.Vbus   = new Int16Array([Number(data.data[6])]);
+          gripperData.faultNow = new Int16Array([Number(data.data[4])]);
+          gripperData.faultOccurred = new Int16Array([Number(data.data[5])]);
+          gripperData.Vbus = new Int16Array([Number(data.data[6])]);
           // console.log( gripperData );
       })
       .catch(function(e) {
@@ -197,10 +197,6 @@ function createWindow () {
       console.log(message);
       event.reply('connectClient-reply', message);
     }
-
-    // console.log(data);
-    // console.log(bitRate, comPort, modbusID);
-    // event.reply('connectClient-reply', data);
   });
 
   ipcMain.on('disconnectClient', (event) => {
@@ -214,7 +210,6 @@ function createWindow () {
       event.reply('connectClient-reply', message);
     }
     // MB_CLOSE();
-    // console.log(event);
   });
 
   ipcMain.on('gripperInitialize', (event) => {
@@ -245,7 +240,6 @@ function createWindow () {
 
   ipcMain.on('gripperDataReq', (event, data) => {
     const dataRepeat = data.dataRepeat;
-    // console.log(data);
 
     if(dataRepeat) {
       MB_READ_ON = true;

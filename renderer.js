@@ -18,6 +18,8 @@ const motorEnable       = document.getElementById("motorEnable");
 const gripperInitialize = document.getElementById("gripperInitialize");
 const pumpONOFF         = document.getElementById("pumpONOFF");
 const portMessages      = document.getElementById("portMessages");
+const init2Btn          = document.getElementById("init2Btn");
+const init2Input        = document.getElementById("init2Input");
 
 findPort.addEventListener('click', () => { // Connect MODBUS Req.
     window.electronAPI.findPortClient();
@@ -96,6 +98,9 @@ pumpONOFF.onchange = function() {
     window.electronAPI.pumpONOFF(checkBox);
 };
 
-
+init2Btn.addEventListener('click', () => {
+    const init2Value = init2Input.value;
+    window.electronAPI.gripperInitialize2(init2Value);
+});
 
 

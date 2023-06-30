@@ -64,7 +64,7 @@
                     </div>
                     <div>
                       <label for="comPort">USB 포트</label>
-                      <input style="width: 100px; text-align: center; margin: 1% 1%;" value="COM7" type="text" id="comPort">
+                      <input style="width: 100px; text-align: center; margin: 1% 1%;" value="COM13" type="text" id="comPort">
                     </div>
                     <div>
                       <label for="comPort">MODBUS Address</label>
@@ -74,9 +74,9 @@
                     <button id='connectBtn' type="button" class="btn btn-outline-dark" style="width: 23%">Connect</button>
                     <button id='disconnectBtn' type="button" class="btn btn-outline-dark" style="width: 23%">Disonnect</button>
                     <div>
-                      <a id = 'portMessages' style="margin: 1% 0%; font-size: 14px;">에러 메세지 업데이트</a>
+                      <a id = 'portMessages' style="margin: 1% 0%; font-size: 14px;">Messages</a>
                     </div>
-                    <p class="card-text" style="margin: 1% 0%; font-size: 12px;">작성예시- Bit rate: 38400, USB 포트: COM6</p>
+                    <p class="card-text" style="margin: 1% 0%; font-size: 12px;">작성예시- Bit rate: 38400, USB 포트: COM1</p>
                   </div>
                 </div>
               </div>
@@ -143,7 +143,6 @@
                             <td align="Right">GripperPos</td>
                             <td align="center"><a id="grpPos2">0 %</a></td>
                           </tr>
-                          <!-- 데이터는 서버에서 동적으로 생성됩니다. -->
                         </tbody>
                       </table>
                     </div>
@@ -161,7 +160,10 @@
                     </div>
                   </div>
                   <div class="card-footer text-body-secondary">
-                    통신 메세지 나타내는 곳
+                    <a id = 'modbusMessage1' style="margin: 1% 0%; font-size: 14px;">MODBUS SEND STATE</a>
+                  </div>
+                  <div class="card-footer text-body-secondary">
+                    <a id = 'modbusMessage2' style="margin: 1% 0%; font-size: 14px;">MODBUS READ STATE</a>
                   </div>
                 </div>
               </div>
@@ -182,6 +184,11 @@
                     <div>
                       <label>Bus Voltage Value</label>
                       <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="0 V" type="text" id="busVoltage">
+                    </div>
+                    <div>
+                      <label>Initialize 2(degree)</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="9000" type="text" id="init2Input">
+                      <button id = "init2Btn" type="button" class="btn btn-outline-dark" style="width: 45%">Gripper Initial 2</button>
                     </div>
                     <div>
                       <label>MODBUS Slave ID</label>

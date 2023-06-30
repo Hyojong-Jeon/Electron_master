@@ -5,7 +5,7 @@
 //============================================//
 
 // Include Library //
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, webContents } = require('electron');
 const path = require('path');
 const ModbusRTU = require ("modbus-serial");
 const { SerialPort } = require('serialport');
@@ -22,6 +22,8 @@ let MB_PORT_OPENED = false;
 let sysClockCnt = 0;
 let MB_READ_ON = false;
 let MB_SEND_BUFFER = [];
+let MB_READ_FAIL_CNT = 0;
+let MB_FAULT_OCCURRED = false;
 
 var gripperData = new Object();
 gripperData.position = new Int16Array([0]);
@@ -31,6 +33,8 @@ gripperData.grpPos   = new Int16Array([0]);
 gripperData.faultNow = new Int16Array([0]);
 gripperData.faultOccurred = new Int16Array([0]);
 gripperData.Vbus = new Int16Array([0]);
+gripperData.mbMessage1 = "MODBUS SEND STATE";
+gripperData.mbMessage2 = "";
 
 var listCOMPort = [];
 
@@ -43,6 +47,7 @@ const POS_CTRL  = 5;
 const VEL_CTRL  = 6;
 const TOR_CTRL  = 7;
 const RESET_POS = 8;
+const ERROR_CLEAR = 9;
 
 const CHANGE_MB_ID    = 50;
 const CHANGE_EL_ANGLE = 51;
@@ -63,7 +68,12 @@ function systemInterrupt() {
   // MODBUS READ TIMING //
   if (sysClockCnt % 10 === 0) {
     if (MB_READ_ON === true) {
-      MB_READ();
+      if (MB_READ_FAIL_CNT > 2) {
+        MB_READ_ON = false;
+        MB_READ_FAIL_CNT = 0;
+      } else {
+        MB_READ();
+      }
     }
   }
 
@@ -75,8 +85,19 @@ function systemInterrupt() {
     }
   }
 
+  // USB PORT Check //
   if (sysClockCnt % 100 === 99) {
     checkUSBConnection();
+  }
+
+  // STM Fault Check //
+  if (sysClockCnt % 100 === 51) {
+    if (gripperData.faultOccurred > 0) {
+      MB_FAULT_OCCURRED = true;
+    }
+    if (MB_FAULT_OCCURRED === true) {
+      MB_SEND_BUFFER.push([ERROR_CLEAR]);
+    }
   }
 
   sysClockCnt++;
@@ -94,9 +115,7 @@ function checkUSBConnection() {
       } else if (compPortNum > 0) {
           listCOMPort.length = 0;
           for (let i = 0; i < compPortNum; i++) {
-            // listCOMPort[i] = ports[i].path;
             listCOMPort[i] = ports[i].friendlyName;
-            // console.log(listCOMPort[i]);
           }
       } else {
           console.log('Comport length error');
@@ -129,9 +148,11 @@ function MB_SEND(values) {
 
     clientRTU.writeRegisters(START_ADDRESS, values)
     .then(function(d) {
+        gripperData.mbMessage1 = "[MODBUS Write Registers "+ JSON.stringify(values) + JSON.stringify(d) + " ]";
         console.log("[MODBUS Write Registers", values, d,"]");
     })
     .catch(function(e) {
+        gripperData.mbMessage1 = "[MB_SEND ERROR: " + e.message + "]";
         console.log("[MB_SEND ERROR: "+e.message+"]");
     })
 
@@ -139,24 +160,26 @@ function MB_SEND(values) {
 }
 
 function MB_READ() {
-    // try to read data
-    const START_ADDRESS = 11;
-    const DATA_LENGTH = 7;
+  // try to read data
+  const START_ADDRESS = 11;
+  const DATA_LENGTH = 7;
 
-      clientRTU.readHoldingRegisters(START_ADDRESS, DATA_LENGTH)
-      .then(function(data) {
-          gripperData.position = new Int16Array([Number(data.data[0])]);
-          gripperData.current  = new Int16Array([Number(data.data[1])]);
-          gripperData.velocity = new Int16Array([Number(data.data[2])]);
-          gripperData.grpPos   = new Int16Array([Number(data.data[3])]);
-          gripperData.faultNow = new Int16Array([Number(data.data[4])]);
-          gripperData.faultOccurred = new Int16Array([Number(data.data[5])]);
-          gripperData.Vbus = new Int16Array([Number(data.data[6])]);
-          // console.log( gripperData );
-      })
-      .catch(function(e) {
-          console.log("[MB_READ ERROR: "+e.message+"]");
-      });
+  clientRTU.readHoldingRegisters(START_ADDRESS, DATA_LENGTH)
+  .then(function(data) {
+    gripperData.position = new Int16Array([Number(data.data[0])]);
+    gripperData.current  = new Int16Array([Number(data.data[1])]);
+    gripperData.velocity = new Int16Array([Number(data.data[2])]);
+    gripperData.grpPos   = new Int16Array([Number(data.data[3])]);
+    gripperData.faultNow = new Int16Array([Number(data.data[4])]);
+    gripperData.faultOccurred = new Int16Array([Number(data.data[5])]);
+    gripperData.Vbus = new Int16Array([Number(data.data[6])]);
+    gripperData.mbMessage2 = "[MB_READ SUCCESS: NO ERROR]";
+  })
+  .catch(function(e) {
+    gripperData.mbMessage2 = "[MB_READ ERROR: "+e.message+"]";
+    console.log("[MB_READ ERROR: "+e.message+"]");
+    ++MB_READ_FAIL_CNT;
+  });
 }
 
 /* -------------------------------------------------------------------- */
@@ -274,6 +297,16 @@ function createWindow () {
     } else {
       MB_SEND_BUFFER.push([MB_VAC_OFF]);
     }
+  });
+
+  ipcMain.on('gripperInitialize2', (event, data) => {
+    let INIT2VALUE = (Number)(data);
+    if (INIT2VALUE < 0) {
+      let temp = new Uint16Array([0]);
+      temp[0] = INIT2VALUE;
+      INIT2VALUE = (Number)(temp[0]);
+    }
+    MB_SEND_BUFFER.push([MB_GRP_INIT2, INIT2VALUE]);
   });
 }
 

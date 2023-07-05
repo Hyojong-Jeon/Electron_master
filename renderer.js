@@ -20,6 +20,7 @@ const pumpONOFF         = document.getElementById("pumpONOFF");
 const portMessages      = document.getElementById("portMessages");
 const init2Btn          = document.getElementById("init2Btn");
 const init2Input        = document.getElementById("init2Input");
+const SysResetBtn       = document.getElementById("SysResetBtn");
 
 findPort.addEventListener('click', () => { // Connect MODBUS Req.
     window.electronAPI.findPortClient();
@@ -52,6 +53,8 @@ writeMBAddressBtn.addEventListener('click', () => {
 });
 
 writeElAngleBtn.addEventListener('click', () => {window.electronAPI.writeElAngle()});
+
+SysResetBtn.addEventListener('click', () => {window.electronAPI.SysReset()});
 
 output.innerHTML = slider.value + '%';
 slider.oninput = function() {

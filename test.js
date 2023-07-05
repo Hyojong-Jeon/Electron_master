@@ -1,6 +1,4 @@
+var number = 101; // 예시로 42를 사용합니다.
+var extractedBit = (number & 1) !== 0;
 
-
-let abc = new Uint16Array([0]);
-
-abc[0] = -8000;
-console.log(abc);
+console.log(extractedBit)

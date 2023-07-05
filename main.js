@@ -23,9 +23,12 @@ let sysClockCnt = 0;
 let MB_READ_ON = false;
 let MB_SEND_BUFFER = [];
 let MB_READ_FAIL_CNT = 0;
+let MB_CUR_ERROR_CNT = 0;
+let MB_OLD_CUR_VALUE = 0;
 let MB_FAULT_OCCURRED = false;
 
 var gripperData = new Object();
+gripperData.state    = new Int16Array([0]);
 gripperData.position = new Int16Array([0]);
 gripperData.velocity = new Int16Array([0]);
 gripperData.current  = new Int16Array([0]);
@@ -48,6 +51,7 @@ const VEL_CTRL  = 6;
 const TOR_CTRL  = 7;
 const RESET_POS = 8;
 const ERROR_CLEAR = 9;
+const SYS_RESET = 10;
 
 const CHANGE_MB_ID    = 50;
 const CHANGE_EL_ANGLE = 51;
@@ -68,8 +72,8 @@ function systemInterrupt() {
   // MODBUS READ TIMING //
   if (sysClockCnt % 10 === 0) {
     if (MB_READ_ON === true) {
-      if (MB_READ_FAIL_CNT > 2) {
-        MB_READ_ON = false;
+      if (MB_READ_FAIL_CNT > 10) {
+        //  MB_READ_ON = false;
         MB_READ_FAIL_CNT = 0;
       } else {
         MB_READ();
@@ -97,6 +101,26 @@ function systemInterrupt() {
     }
     if (MB_FAULT_OCCURRED === true) {
       MB_SEND_BUFFER.push([ERROR_CLEAR]);
+    }
+  }
+
+  // Current Current Check //
+  if (sysClockCnt % 10 === 2) {
+    let MB_MOTOR_EN = (gripperData.state & 1) !== 0;
+
+    if (MB_READ_ON === true && MB_MOTOR_EN === true) {
+      if (MB_OLD_CUR_VALUE === gripperData.current) {
+        ++MB_CUR_ERROR_CNT;
+        console.log(MB_CUR_ERROR_CNT);
+      } else {
+        MB_CUR_ERROR_CNT = 0;
+      }
+      if (MB_CUR_ERROR_CNT > 5) {
+        MB_SEND_BUFFER.push([SYS_RESET]);
+        MB_SEND_BUFFER.push([ENABLE]);
+        MB_SEND_BUFFER.push([MB_VAC_ON]);
+        console.log("RESET SYSTEM!");
+      }
     }
   }
 
@@ -161,23 +185,26 @@ function MB_SEND(values) {
 
 function MB_READ() {
   // try to read data
-  const START_ADDRESS = 11;
-  const DATA_LENGTH = 7;
+  const START_ADDRESS = 10;
+  const DATA_LENGTH = 8;
 
   clientRTU.readHoldingRegisters(START_ADDRESS, DATA_LENGTH)
   .then(function(data) {
-    gripperData.position = new Int16Array([Number(data.data[0])]);
-    gripperData.current  = new Int16Array([Number(data.data[1])]);
-    gripperData.velocity = new Int16Array([Number(data.data[2])]);
-    gripperData.grpPos   = new Int16Array([Number(data.data[3])]);
-    gripperData.faultNow = new Int16Array([Number(data.data[4])]);
-    gripperData.faultOccurred = new Int16Array([Number(data.data[5])]);
-    gripperData.Vbus = new Int16Array([Number(data.data[6])]);
+    gripperData.state    = new Int16Array([Number(data.data[0])]);
+    gripperData.position = new Int16Array([Number(data.data[1])]);
+    gripperData.current  = new Int16Array([Number(data.data[2])]);
+    gripperData.velocity = new Int16Array([Number(data.data[3])]);
+    gripperData.grpPos   = new Int16Array([Number(data.data[4])]);
+    gripperData.faultNow = new Int16Array([Number(data.data[5])]);
+    gripperData.faultOccurred = new Int16Array([Number(data.data[6])]);
+    gripperData.Vbus = new Int16Array([Number(data.data[7])]);
     gripperData.mbMessage2 = "[MB_READ SUCCESS: NO ERROR]";
+
+    MB_READ_FAIL_CNT = 0;
   })
   .catch(function(e) {
-    gripperData.mbMessage2 = "[MB_READ ERROR: "+e.message+"]";
-    console.log("[MB_READ ERROR: "+e.message+"]");
+    gripperData.mbMessage2 = "[MB_READ ERROR: " + e.message + "]";
+    console.log("[MB_READ ERROR: " + e.message+"]");
     ++MB_READ_FAIL_CNT;
   });
 }
@@ -307,6 +334,12 @@ function createWindow () {
       INIT2VALUE = (Number)(temp[0]);
     }
     MB_SEND_BUFFER.push([MB_GRP_INIT2, INIT2VALUE]);
+  });
+
+  ipcMain.on('SysReset', (event) => {
+    MB_SEND_BUFFER.push([SYS_RESET]);
+    MB_SEND_BUFFER.push([ENABLE]);
+    MB_SEND_BUFFER.push([MB_VAC_ON]);
   });
 }
 

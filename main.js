@@ -82,7 +82,7 @@ function systemInterrupt() {
   }
 
   // MODBUS SEND TIMING //
-  if (sysClockCnt % 10 === 5) {
+  if (sysClockCnt % 10 === 7) {
     if (MB_SEND_BUFFER.length > 0) {
       MB_SEND(MB_SEND_BUFFER[0]);
       MB_SEND_BUFFER.shift();
@@ -105,24 +105,27 @@ function systemInterrupt() {
   }
 
   // Current Current Check //
-  if (sysClockCnt % 10 === 2) {
-    let MB_MOTOR_EN = (gripperData.state & 1) !== 0;
+  // if (sysClockCnt % 10 === 2) {
+  //   let MB_MOTOR_EN = (gripperData.state & 1) !== 0;
+  //   console.log(MB_MOTOR_EN);
 
-    if (MB_READ_ON === true && MB_MOTOR_EN === true) {
-      if (MB_OLD_CUR_VALUE === gripperData.current) {
-        ++MB_CUR_ERROR_CNT;
-        console.log(MB_CUR_ERROR_CNT);
-      } else {
-        MB_CUR_ERROR_CNT = 0;
-      }
-      if (MB_CUR_ERROR_CNT > 5) {
-        MB_SEND_BUFFER.push([SYS_RESET]);
-        MB_SEND_BUFFER.push([ENABLE]);
-        MB_SEND_BUFFER.push([MB_VAC_ON]);
-        console.log("RESET SYSTEM!");
-      }
-    }
-  }
+  //   if (MB_READ_ON === true && MB_MOTOR_EN === true) {
+  //     if (MB_OLD_CUR_VALUE === gripperData.current) {
+  //       ++MB_CUR_ERROR_CNT;
+  //       console.log(MB_CUR_ERROR_CNT);
+  //       MB_OLD_CUR_VALUE = gripperData.current;
+  //     } else {
+  //       MB_CUR_ERROR_CNT = 0;
+  //       MB_OLD_CUR_VALUE = gripperData.current;
+  //     }
+  //     if (MB_CUR_ERROR_CNT > 5) {
+  //       MB_SEND_BUFFER.push([SYS_RESET]);
+  //       MB_SEND_BUFFER.push([ENABLE]);
+  //       MB_SEND_BUFFER.push([MB_VAC_ON]);
+  //       console.log("RESET SYSTEM!");
+  //     }
+  //   }
+  // }
 
   sysClockCnt++;
   if (sysClockCnt > 99) {
@@ -338,8 +341,8 @@ function createWindow () {
 
   ipcMain.on('SysReset', (event) => {
     MB_SEND_BUFFER.push([SYS_RESET]);
-    MB_SEND_BUFFER.push([ENABLE]);
-    MB_SEND_BUFFER.push([MB_VAC_ON]);
+    // MB_SEND_BUFFER.push([ENABLE]);
+    // MB_SEND_BUFFER.push([MB_VAC_ON]);
   });
 }
 

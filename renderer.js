@@ -21,6 +21,8 @@ const portMessages      = document.getElementById("portMessages");
 const init2Btn          = document.getElementById("init2Btn");
 const init2Input        = document.getElementById("init2Input");
 const SysResetBtn       = document.getElementById("SysResetBtn");
+const webSocketBtn      = document.getElementById("webSocketBtn");
+const webSocketInput    = document.getElementById("webSocketInput");
 
 findPort.addEventListener('click', () => { // Connect MODBUS Req.
     window.electronAPI.findPortClient();
@@ -104,6 +106,11 @@ pumpONOFF.onchange = function() {
 init2Btn.addEventListener('click', () => {
     const init2Value = init2Input.value;
     window.electronAPI.gripperInitialize2(init2Value);
+});
+
+webSocketBtn.addEventListener('click', () => {
+    const webSocketPort = webSocketInput.value;
+    window.electronAPI.startWebSocClient(webSocketPort);
 });
 
 

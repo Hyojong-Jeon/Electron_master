@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   pumpONOFF: (data) => ipcRenderer.send('pumpONOFF', data),
   gripperInitialize2: (data) => ipcRenderer.send('gripperInitialize2', data),
   SysReset: () => ipcRenderer.send('SysReset'),
+  startWebSocClient: (data) => ipcRenderer.send('startWebSocClient', data),
 });
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {

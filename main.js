@@ -9,9 +9,11 @@ const { app, BrowserWindow, ipcMain, webContents } = require('electron');
 const path = require('path');
 const ModbusRTU = require ("modbus-serial");
 const { SerialPort } = require('serialport');
+const WebSocketClient = require('websocket').client;
 
 // Declaration //
 const clientRTU = new ModbusRTU();
+const clientWS = new WebSocketClient();
 /* -------------------------------------------------------------------- */
 // RTU Initial Setup //
 const MB_TIMEOUT = 50;
@@ -138,7 +140,7 @@ function checkUSBConnection() {
     .then(ports => {
       const compPortNum = ports.length;
       if (compPortNum === 0) {
-          console.log('NO USB COMPORT');
+          // console.log('NO USB COMPORT');
       } else if (compPortNum > 0) {
           listCOMPort.length = 0;
           for (let i = 0; i < compPortNum; i++) {
@@ -344,6 +346,11 @@ function createWindow () {
     // MB_SEND_BUFFER.push([ENABLE]);
     // MB_SEND_BUFFER.push([MB_VAC_ON]);
   });
+
+  ipcMain.on('startWebSocClient', (event, data) => {
+    const localhost = 'ws://localhost:' + data;
+    clientWS.connect(localhost);
+  });
 }
 
 app.whenReady().then(() => {
@@ -354,6 +361,31 @@ app.whenReady().then(() => {
   });
 })
 
+
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 });
+
+
+/* -------------------------------------------------------------------- */
+
+// Others: PlotJuggler //
+clientWS.on('connectFailed', (error) => {
+  console.log(`Failed to connect server: ${error.toString()}`);
+});
+
+clientWS.on('connect', (connection) => {
+  console.log('Success to connect server');
+
+  connection.on('message', (message) => {
+    if (message.type === 'utf8') {
+      console.log(`Messages from server: ${message.utf8Data}`);
+    }
+  });
+
+  connection.on('close', () => {
+    console.log('.');
+  });
+});
+
+/* -------------------------------------------------------------------- */

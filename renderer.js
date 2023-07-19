@@ -113,4 +113,9 @@ webSocketBtn.addEventListener('click', () => {
     window.electronAPI.startWebSocClient(webSocketPort);
 });
 
+function webSocketInterval() {
+    window.electronAPI.webSocState();
+}
+setInterval(webSocketInterval, 500);
+
 

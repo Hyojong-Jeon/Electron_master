@@ -29,6 +29,11 @@ let MB_CUR_ERROR_CNT = 0;
 let MB_OLD_CUR_VALUE = 0;
 let MB_FAULT_OCCURRED = false;
 
+let WS_PORT_OPENED = false;
+let WS_STATE = 'WS_CLOSED';
+let WS_STATE_MESSAGE = '';
+let WS_INTERVAL;
+
 var gripperData = new Object();
 gripperData.state    = new Int16Array([0]);
 gripperData.position = new Int16Array([0]);
@@ -72,7 +77,7 @@ setInterval(systemInterrupt, SYS_CLOCK);
 
 function systemInterrupt() {
   // MODBUS READ TIMING //
-  if (sysClockCnt % 10 === 0) {
+  if (sysClockCnt % 5 === 0) {
     if (MB_READ_ON === true) {
       if (MB_READ_FAIL_CNT > 10) {
         //  MB_READ_ON = false;
@@ -84,7 +89,7 @@ function systemInterrupt() {
   }
 
   // MODBUS SEND TIMING //
-  if (sysClockCnt % 10 === 7) {
+  if (sysClockCnt % 5 === 3) {
     if (MB_SEND_BUFFER.length > 0) {
       MB_SEND(MB_SEND_BUFFER[0]);
       MB_SEND_BUFFER.shift();
@@ -102,7 +107,7 @@ function systemInterrupt() {
       MB_FAULT_OCCURRED = true;
     }
     if (MB_FAULT_OCCURRED === true) {
-      MB_SEND_BUFFER.push([ERROR_CLEAR]);
+      // MB_SEND_BUFFER.push([ERROR_CLEAR]);
     }
   }
 
@@ -347,9 +352,32 @@ function createWindow () {
     // MB_SEND_BUFFER.push([MB_VAC_ON]);
   });
 
+  ipcMain.on('webSocState', (event) => {
+    switch (WS_STATE) {
+      case 'WS_OPENED': {
+        WS_STATE_MESSAGE = 'Websocket Opened';
+      } break;
+
+      case 'WS_OPENING': {
+        WS_STATE_MESSAGE = 'Websocket opening';
+      } break;
+
+      case 'WS_CLOSED': {
+        WS_STATE_MESSAGE = 'Websocket Closed';
+      } break;
+
+      case 'WS_FAILED': {
+        WS_STATE_MESSAGE = 'Websocket Failed';
+      } break;
+    }
+
+    event.reply('wsState-reply', WS_STATE_MESSAGE);
+  });
+
   ipcMain.on('startWebSocClient', (event, data) => {
     const localhost = 'ws://localhost:' + data;
     clientWS.connect(localhost);
+    WS_STATE = 'WS_OPENING';
   });
 }
 
@@ -361,21 +389,21 @@ app.whenReady().then(() => {
   });
 })
 
-
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 });
-
 
 /* -------------------------------------------------------------------- */
 
 // Others: PlotJuggler //
 clientWS.on('connectFailed', (error) => {
   console.log(`Failed to connect server: ${error.toString()}`);
+  WS_STATE = 'WS_FAILED';
 });
 
 clientWS.on('connect', (connection) => {
   console.log('Success to connect server');
+  WS_STATE = 'WS_OPENED';
 
   connection.on('message', (message) => {
     if (message.type === 'utf8') {
@@ -384,8 +412,21 @@ clientWS.on('connect', (connection) => {
   });
 
   connection.on('close', () => {
-    console.log('.');
+    WS_STATE = 'WS_CLOSED';
+    clearInterval(WS_INTERVAL, 10);
+    console.log('Websocket sever is closed');
+  });
+
+  WS_INTERVAL = setInterval(() => {
+    let jsonData = new Object();
+
+    jsonData.position = gripperData.position;
+    jsonData.velocity = gripperData.velocity;
+    jsonData.current  = gripperData.current;
+
+    connection.sendUTF(JSON.stringify(jsonData));
   });
 });
+
 
 /* -------------------------------------------------------------------- */

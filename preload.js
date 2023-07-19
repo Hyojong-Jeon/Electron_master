@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gripperInitialize2: (data) => ipcRenderer.send('gripperInitialize2', data),
   SysReset: () => ipcRenderer.send('SysReset'),
   startWebSocClient: (data) => ipcRenderer.send('startWebSocClient', data),
+  webSocState: () => ipcRenderer.send('webSocState'),
 });
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
@@ -58,6 +59,12 @@ ipcRenderer.on('disconnectClient-reply', (event, arg) => {
 
 ipcRenderer.on('modbusSend-reply', (event, arg) => {
   const modbusMessage = document.getElementById("modbusMessage");
+  modbusMessage.text = arg;
+  console.log(arg);
+});
+
+ipcRenderer.on('wsState-reply', (event, arg) => {
+  const modbusMessage = document.getElementById("webSocketState");
   modbusMessage.text = arg;
   console.log(arg);
 });

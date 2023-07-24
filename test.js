@@ -1,12 +1,12 @@
 const { raw } = require('express');
 const net = require('net');
 
-const client = new net.Socket();
+const clientTCP = new net.Socket();
 
 const host = '192.168.0.223';
 const port = 4001;
 
-client.connect(port, host, () => {
+clientTCP.connect(port, host, () => {
   console.log('TCP/IP Server Connected Successfully');
   //                    STD    INDEX   LENG  D0   D1   D2   D3   D4   D5   D6   D7
   const STOP_TX      = '04'+'00000102'+'08'+'01'+'00'+'00'+'00'+'00'+'00'+'00'+'00';
@@ -15,12 +15,12 @@ client.connect(port, host, () => {
   const ENABLE_TX    = '04'+'00000102'+'08'+'01'+'03'+'01'+'00'+'00'+'00'+'00'+'00';
   const RATE_SET     = '04'+'00000102'+'08'+'01'+'05'+'27'+'10'+'00'+'00'+'00'+'00';
 
-  client.write(ENABLE_TX);
+  clientTCP.write(ENABLE_TX);
 });
 
 let Force_buffer = new Object();
 
-client.on('data', (data) => {
+clientTCP.on('data', (data) => {
   const raw_data = data;
 
   const CAN_DATA_LENGTH = 14;
@@ -49,7 +49,7 @@ client.on('data', (data) => {
 
 });
 
-client.on('end', () => {
+clientTCP.on('end', () => {
   console.log('TCP/IP Server is closed!');
 });
 

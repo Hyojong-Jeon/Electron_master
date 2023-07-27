@@ -11,6 +11,7 @@ const ModbusRTU = require ("modbus-serial");
 const { SerialPort } = require('serialport');
 const WebSocketClient = require('websocket').client;
 const net = require('net');
+const { stringify } = require('querystring');
 
 // Declaration //
 const clientRTU = new ModbusRTU();
@@ -381,6 +382,24 @@ function createWindow () {
     clientWS.connect(localhost);
     WS_STATE = 'WS_OPENING';
   });
+
+  ipcMain.on('CAN_Enable', (event) => {
+    const TX_2 = new Uint8Array([4,0,0,5,0,8,0,1,0,0,0,0,0,0]);
+    client.write(TX_2);
+    console.log(TX_2);
+  });
+
+  ipcMain.on('CAN_Disable', (event) => {
+    const TX_TEST = '04'+'00000500'+'08'+'00'+'04'+'00'+'00'+'00'+'00'+'00'+'00';
+    const abc = clientTCP.write(TX_TEST, ()=> {
+      console.log(abc);
+    });
+  });
+
+  ipcMain.on('CAN_Init', (event) => {
+    const TX_TEST = '04'+'00000500'+'08'+'00'+'65'+'00'+'00'+'00'+'00'+'00'+'00';
+    clientTCP.write(TX_TEST);
+  });
 }
 
 app.whenReady().then(() => {
@@ -434,10 +453,10 @@ clientWS.on('connect', (connection) => {
 /* -------------------------------------------------------------------- */
 
 // Others: eCAN Communication (with AIDIN ROBOTICS FT Sensor) //
-const host = '192.168.0.223';
-const port = 4001;
+// const host = '192.168.0.223';
+// const port = 4001;
 
-let Force_buffer = new Object();
+// let Force_buffer = new Object();
 
 // clientTCP.connect(port, host, () => {
 //   console.log('TCP/IP Server Connected Successfully');
@@ -451,35 +470,68 @@ let Force_buffer = new Object();
 //   clientTCP.write(ENABLE_TX);
 // });
 
+// clientTCP.on('data', (data) => {
+//   const raw_data = data;
+
+//   const CAN_DATA_LENGTH = 14;
+//   const eCAN_length = raw_data.length;
+
+//   const remainder = eCAN_length % CAN_DATA_LENGTH;
+//   const CAN_DATA_NUMBER = eCAN_length/CAN_DATA_LENGTH;
+
+//   if ( remainder === 0) {
+//     for (let i = 0; i < CAN_DATA_NUMBER; i++) {
+//       if (raw_data[4 + CAN_DATA_LENGTH * i] === 1) { // index == 1 일때 힘값
+//         Force_buffer.Fx = Number(((raw_data[ 6+CAN_DATA_LENGTH*i]*256 + raw_data[ 7+CAN_DATA_LENGTH*i])/100 - 300).toPrecision(4));
+//         Force_buffer.Fy = Number(((raw_data[ 8+CAN_DATA_LENGTH*i]*256 + raw_data[ 9+CAN_DATA_LENGTH*i])/100 - 300).toPrecision(4));
+//         Force_buffer.Fz = Number(((raw_data[10+CAN_DATA_LENGTH*i]*256 + raw_data[11+CAN_DATA_LENGTH*i])/100 - 300).toPrecision(4));
+
+//       } else if (raw_data[4 + CAN_DATA_LENGTH * i] === 2) {  // index == 2 일때 토크값
+//         Force_buffer.Tx = Number(((raw_data[ 6+CAN_DATA_LENGTH*i]*256 + raw_data[ 7+CAN_DATA_LENGTH*i])/500 - 50).toPrecision(4));
+//         Force_buffer.Ty = Number(((raw_data[ 8+CAN_DATA_LENGTH*i]*256 + raw_data[ 9+CAN_DATA_LENGTH*i])/500 - 50).toPrecision(4));
+//         Force_buffer.Tz = Number(((raw_data[10+CAN_DATA_LENGTH*i]*256 + raw_data[11+CAN_DATA_LENGTH*i])/500 - 50).toPrecision(4));
+
+//       }
+//     }
+//   } else {
+//     // receive error
+//   }
+
+// });
+
+// clientTCP.on('end', () => {
+//   console.log('TCP/IP Server is closed!');
+// });
+
+/* -------------------------------------------------------------------- */
+
+// Others: eCAN Communication (with DATC) //
+const host = '192.168.0.223';
+const port = 4001;
+
+clientTCP.connect(port, host, () => {
+  console.log('TCP/IP Server Connected Successfully');
+});
+
 clientTCP.on('data', (data) => {
   const raw_data = data;
-
-  const CAN_DATA_LENGTH = 14;
-  const eCAN_length = raw_data.length;
-
-  const remainder = eCAN_length % CAN_DATA_LENGTH;
-  const CAN_DATA_NUMBER = eCAN_length/CAN_DATA_LENGTH;
-
-  if ( remainder === 0) {
-    for (let i = 0; i < CAN_DATA_NUMBER; i++) {
-      if (raw_data[4 + CAN_DATA_LENGTH * i] === 1) { // index == 1 일때 힘값
-        Force_buffer.Fx = Number(((raw_data[ 6+CAN_DATA_LENGTH*i]*256 + raw_data[ 7+CAN_DATA_LENGTH*i])/100 - 300).toPrecision(4));
-        Force_buffer.Fy = Number(((raw_data[ 8+CAN_DATA_LENGTH*i]*256 + raw_data[ 9+CAN_DATA_LENGTH*i])/100 - 300).toPrecision(4));
-        Force_buffer.Fz = Number(((raw_data[10+CAN_DATA_LENGTH*i]*256 + raw_data[11+CAN_DATA_LENGTH*i])/100 - 300).toPrecision(4));
-
-      } else if (raw_data[4 + CAN_DATA_LENGTH * i] === 2) {  // index == 2 일때 토크값
-        Force_buffer.Tx = Number(((raw_data[ 6+CAN_DATA_LENGTH*i]*256 + raw_data[ 7+CAN_DATA_LENGTH*i])/500 - 50).toPrecision(4));
-        Force_buffer.Ty = Number(((raw_data[ 8+CAN_DATA_LENGTH*i]*256 + raw_data[ 9+CAN_DATA_LENGTH*i])/500 - 50).toPrecision(4));
-        Force_buffer.Tz = Number(((raw_data[10+CAN_DATA_LENGTH*i]*256 + raw_data[11+CAN_DATA_LENGTH*i])/500 - 50).toPrecision(4));
-
-      }
-    }
-  } else {
-    // receive error
-  }
-
+  console.log(raw_data);
 });
 
 clientTCP.on('end', () => {
+  console.log('TCP/IP Server is closed!');
+});
+
+clientTCP.on('error', function (e) {
+  if (e.code == 'EADDRINUSE') {
+    console.log('Address in use, retrying...');
+    setTimeout(function () {
+      clientTCP.close();
+      clientTCP.listen(port, host);
+    }, 1000);
+  }
+});
+
+clientTCP.on('close', () => {
   console.log('TCP/IP Server is closed!');
 });

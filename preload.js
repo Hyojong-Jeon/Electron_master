@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   SysReset: () => ipcRenderer.send('SysReset'),
   startWebSocClient: (data) => ipcRenderer.send('startWebSocClient', data),
   webSocState: () => ipcRenderer.send('webSocState'),
+  CAN_Enable: () => ipcRenderer.send('CAN_Enable'),
+  CAN_Disable: () => ipcRenderer.send('CAN_Disable'),
+  CAN_Init: () => ipcRenderer.send('CAN_Init')
 });
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {

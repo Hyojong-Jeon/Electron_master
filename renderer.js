@@ -23,6 +23,9 @@ const init2Input        = document.getElementById("init2Input");
 const SysResetBtn       = document.getElementById("SysResetBtn");
 const webSocketBtn      = document.getElementById("webSocketBtn");
 const webSocketInput    = document.getElementById("webSocketInput");
+const CAN_EnableBtn     = document.getElementById("CAN_EnableBtn");
+const CAN_DisableBtn    = document.getElementById("CAN_DisableBtn");
+const CAN_InitBtn       = document.getElementById("CAN_InitBtn");
 
 findPort.addEventListener('click', () => { // Connect MODBUS Req.
     window.electronAPI.findPortClient();
@@ -117,5 +120,17 @@ function webSocketInterval() {
     window.electronAPI.webSocState();
 }
 setInterval(webSocketInterval, 500);
+
+CAN_EnableBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
+    window.electronAPI.CAN_Enable();
+});
+
+CAN_DisableBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
+    window.electronAPI.CAN_Disable();
+});
+
+CAN_InitBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
+    window.electronAPI.CAN_Init();
+});
 
 

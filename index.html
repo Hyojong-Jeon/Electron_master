@@ -67,7 +67,7 @@
                       <input style="width: 100px; text-align: center; margin: 1% 1%;" value="COM13" type="text" id="comPort">
                     </div>
                     <div>
-                      <label for="comPort">MODBUS Address</label>
+                      <label for="modbusID">MODBUS Address</label>
                       <input style="width: 100px; text-align: center; margin: 1% 1%;" value="1" type="text" id="modbusID">
                     </div>
                     <button id='findPort' type="button" class="btn btn-outline-dark" style="width: 23%">Find Port</button>
@@ -149,14 +149,17 @@
 
                     <div>
                     <label for="customRange1" class="form-label" min="0" max="100" value="50%"><b>Gripper Position</b></label>
+                    <p align="center">현재 그리퍼 위치 <span id="sliderValue1"></span></p>
+                    <input id ="grpPosRNG1" type="range" class="form-range">
                     <input id ="grpPosRNG" type="range" class="form-range">
                     <p align="center">목표 그리퍼 위치: <span id="sliderValue"></span></p>
                     </div>
-                    <div>
-                    <button id = "gripperInitBtn"  type="button" class="btn btn-outline-dark" style="width: 20%">Initialize</button>
-                    <button id = "gripperOpenBtn"  type="button" class="btn btn-outline-dark" style="width: 20%">Open</button>
-                    <button id = "gripperCloseBtn" type="button" class="btn btn-outline-dark" style="width: 20%">Close</button>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
+                    <div align="center" class="form-check form-switch">
+                    <button id = "gripperInitBtn"  type="button" class="btn btn-outline-dark" style="width: 18%">Initialize</button>
+                    <button id = "gripperOpenBtn"  type="button" class="btn btn-outline-dark" style="width: 18%">Open</button>
+                    <button id = "gripperCloseBtn" type="button" class="btn btn-outline-dark" style="width: 18%">Close</button>
+                    <button id = "gripperRepeatBtn" type="button" class="btn btn-outline-dark" style="width: 18%">Repeat</button>
+                    <a href="#" class="btn btn-primary" style="width: 18%">Go</a>
                     </div>
                   </div>
                   <div class="card-footer text-body-secondary">
@@ -173,6 +176,13 @@
                   <div class="card-body">
                     <h5 class="card-title"><b>Gripper Setup</b></h5>
                     <p class="card-text">* 모드버스 슬레이브 ID 변경 및 전기각 수정</p>
+                    <div>
+                      <label>PID Gain</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="10000" type="text" id="PGainInput">
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="1000" type="text" id="IGainInput">
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="1000" type="text" id="DGainInput">
+                      <button id = "PIDSetBtn" type="button" class="btn btn-outline-dark" style="width: 20%">PID Set</button>
+                    </div>
                     <div>
                       <label>STM32 System Reset</label>
                       <button id = "SysResetBtn" type="button" class="btn btn-outline-dark" style="width: 45%">System Reset</button>

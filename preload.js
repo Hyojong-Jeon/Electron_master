@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gripperInitialize:() => ipcRenderer.send('gripperInitialize'),
   gripperOpen:() => ipcRenderer.send('gripperOpen'),
   gripperClose:() => ipcRenderer.send('gripperClose'),
+  gripperRepeat:() => ipcRenderer.send('gripperRepeat'),
   gripperPosCtrl:(data) => ipcRenderer.send('gripperPosCtrl', data),
   writeMBAddress:(data) => ipcRenderer.send('writeMBAddress', data),
   writeElAngle:() => ipcRenderer.send('writeElAngle'),
@@ -20,7 +21,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   webSocState: () => ipcRenderer.send('webSocState'),
   CAN_Enable: () => ipcRenderer.send('CAN_Enable'),
   CAN_Disable: () => ipcRenderer.send('CAN_Disable'),
-  CAN_Init: () => ipcRenderer.send('CAN_Init')
+  CAN_Init: () => ipcRenderer.send('CAN_Init'),
+  setPIDGain: (data) => ipcRenderer.send('setPIDGain', data),
 });
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
@@ -33,6 +35,7 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
   const busVoltage = document.getElementById("busVoltage");
   const modbusMessage1 = document.getElementById("modbusMessage1");
   const modbusMessage2 = document.getElementById("modbusMessage2");
+  const slider1 = document.getElementById("grpPosRNG1");
 
   grpPos.text = arg.position[0]+" deg";
   grpVel.text = arg.velocity[0]+" RPM";
@@ -43,11 +46,31 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
   busVoltage.value = arg.Vbus[0]+" V";
   modbusMessage1.text = arg.mbMessage1;
   modbusMessage2.text = arg.mbMessage2;
+
+
+  slider1.value = arg.grpPos[0]/100;
+  console.log(slider1.value);
 });
 
 ipcRenderer.on('findPort-reply', (event, arg) => {
   const portMessages = document.getElementById("portMessages");
-  portMessages.text = JSON.stringify(arg);
+  const comPort = document.getElementById("comPort");
+  const inputString = JSON.stringify(arg);
+  portMessages.text = inputString
+
+  const regex = /COM\d+/; // COM 다음에 숫자 1개 이상이 나오는 패턴을 찾음
+  const result = inputString.match(regex);
+
+  let temp = '';
+  if (result) {
+    temp = result[0];
+    console.log(temp); // 출력: "COM15"
+  } else {
+    temp = 'NO COM';
+    console.log(temp);
+  }
+  comPort.value = temp;
+
 });
 
 ipcRenderer.on('connectClient-reply', (event, arg) => {
@@ -69,5 +92,4 @@ ipcRenderer.on('modbusSend-reply', (event, arg) => {
 ipcRenderer.on('wsState-reply', (event, arg) => {
   const modbusMessage = document.getElementById("webSocketState");
   modbusMessage.text = arg;
-  console.log(arg);
 });

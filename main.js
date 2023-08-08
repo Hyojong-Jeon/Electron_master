@@ -25,6 +25,7 @@ const SYS_CLOCK = 10;
 
 let MB_PORT_OPENED = false;
 let sysClockCnt = 0;
+let repeatFlag = false;
 let MB_READ_ON = false;
 let MB_SEND_BUFFER = [];
 let MB_READ_FAIL_CNT = 0;
@@ -36,6 +37,7 @@ let WS_PORT_OPENED = false;
 let WS_STATE = 'WS_CLOSED';
 let WS_STATE_MESSAGE = '';
 let WS_INTERVAL;
+let intervalID2;
 
 var gripperData = new Object();
 gripperData.state    = new Int16Array([0]);
@@ -51,7 +53,7 @@ gripperData.mbMessage2 = "";
 
 var listCOMPort = [];
 
-//** DATC-EMD MODBUS COMMAND **/
+//** DATC-EMD MODBUS COMMAND BEGIN **/
 const ENABLE    = 1;
 const STOP_P    = 2;
 const STOP_V    = 3;
@@ -74,7 +76,10 @@ const GRP_POS_CTRL = 104; // 0 ~ 100%
 const MB_GRP_INIT2 = 105;
 const MB_VAC_ON    = 106;
 const MB_VAC_OFF   = 107;
-//** DATC-EMD MODBUS COMMAND **/
+
+const MB_SET_MAX_VAL  = 201;
+const MB_SET_PID_GAIN = 211;
+//** DATC-EMD MODBUS COMMAND END **/
 
 setInterval(systemInterrupt, SYS_CLOCK);
 
@@ -287,6 +292,21 @@ function createWindow () {
     MB_SEND_BUFFER.push([GRP_CLOSE]);
   });
 
+  ipcMain.on('gripperRepeat', (event) => {
+    repeatFlag = !repeatFlag;
+
+    if (repeatFlag) {
+      intervalID2 = setInterval(()=>{
+        MB_SEND_BUFFER.push([GRP_OPEN]);
+        setTimeout(()=>{
+          MB_SEND_BUFFER.push([GRP_CLOSE]);
+          },2500);
+        }, 5000);
+    } else {
+      clearInterval(intervalID2);
+    }
+  });
+
   ipcMain.on('gripperPosCtrl', (event, data) => {
     const gripperPosValue = 100*(Number)(data);
     MB_SEND_BUFFER.push([GRP_POS_CTRL, gripperPosValue]);
@@ -372,6 +392,10 @@ function createWindow () {
       case 'WS_FAILED': {
         WS_STATE_MESSAGE = 'Websocket Failed';
       } break;
+
+      default : {
+
+      } break;
     }
 
     event.reply('wsState-reply', WS_STATE_MESSAGE);
@@ -399,6 +423,14 @@ function createWindow () {
   ipcMain.on('CAN_Init', (event) => {
     const TX_TEST = '04'+'00000500'+'08'+'00'+'65'+'00'+'00'+'00'+'00'+'00'+'00';
     clientTCP.write(TX_TEST);
+  });
+
+  ipcMain.on('setPIDGain', (event, data) => {
+    const PGain = data.PGain;
+    const IGain = data.IGain;
+    const DGain = data.DGain;
+
+    MB_SEND_BUFFER.push([MB_SET_PID_GAIN, PGain, IGain, DGain]);
   });
 }
 

@@ -4,6 +4,7 @@ const disconnectBtn   = document.getElementById("disconnectBtn");
 const gripperInitBtn  = document.getElementById("gripperInitBtn");
 const gripperOpenBtn  = document.getElementById("gripperOpenBtn");
 const gripperCloseBtn = document.getElementById("gripperCloseBtn");
+const gripperRepeatBtn = document.getElementById("gripperRepeatBtn");
 const bitRateVal      = document.getElementById("bitRate");
 const comPortVal      = document.getElementById("comPort");
 const modbusIDVal     = document.getElementById("modbusID");
@@ -26,6 +27,23 @@ const webSocketInput    = document.getElementById("webSocketInput");
 const CAN_EnableBtn     = document.getElementById("CAN_EnableBtn");
 const CAN_DisableBtn    = document.getElementById("CAN_DisableBtn");
 const CAN_InitBtn       = document.getElementById("CAN_InitBtn");
+const PIDSetBtn         = document.getElementById("PIDSetBtn");
+const PGainInput        = document.getElementById("PGainInput");
+const IGainInput        = document.getElementById("IGainInput");
+const DGainInput        = document.getElementById("DGainInput");
+
+PIDSetBtn.addEventListener('click', () => { // Connect MODBUS Req.
+    const PGain = PGainInput.value;
+    const IGain = IGainInput.value;
+    const DGain = DGainInput.value;
+
+    let data = new Object();
+    data.PGain  = PGain;
+    data.IGain  = IGain;
+    data.DGain = DGain;
+
+    window.electronAPI.setPIDGain(data);
+});
 
 findPort.addEventListener('click', () => { // Connect MODBUS Req.
     window.electronAPI.findPortClient();
@@ -51,6 +69,7 @@ disconnectBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
 gripperInitBtn.addEventListener ('click', () => {window.electronAPI.gripperInitialize()});
 gripperOpenBtn.addEventListener ('click', () => {window.electronAPI.gripperOpen()});
 gripperCloseBtn.addEventListener('click', () => {window.electronAPI.gripperClose()});
+gripperRepeatBtn.addEventListener('click', () => {window.electronAPI.gripperRepeat()});
 
 writeMBAddressBtn.addEventListener('click', () => {
     const changeMBAddress = changeMBAddressVal.value;

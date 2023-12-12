@@ -79,6 +79,8 @@ const MB_VAC_OFF   = 107;
 
 const MB_SET_MAX_VAL  = 201;
 const MB_SET_PID_GAIN = 211;
+const MB_SET_TORQUE   = 212;
+const MB_SET_VELOCITY = 213;
 //** DATC-EMD MODBUS COMMAND END **/
 
 setInterval(systemInterrupt, SYS_CLOCK);
@@ -432,6 +434,27 @@ function createWindow () {
 
     MB_SEND_BUFFER.push([MB_SET_PID_GAIN, PGain, IGain, DGain]);
   });
+
+  ipcMain.on('PosMove', (event, data) => {
+    let position_uint16 = new Uint16Array(1);
+    position_uint16[0] = (Number)(data.position) + (Number)(gripperData.position);
+
+    const position = position_uint16[0];
+    const duration = data.duration;
+
+    MB_SEND_BUFFER.push([POS_CTRL, position, duration]);
+    // MB_SEND_BUFFER.push([TOR_CTRL, 1000]);
+  });
+
+  ipcMain.on('setTorque', (event, data) => {
+    const setTorque = data;
+    MB_SEND_BUFFER.push([MB_SET_TORQUE, setTorque]);
+  });
+
+  ipcMain.on('setVelocity', (event, data) => {
+    const setVelocity = data;
+    MB_SEND_BUFFER.push([MB_SET_VELOCITY, setVelocity]);
+  });
 }
 
 app.whenReady().then(() => {
@@ -466,7 +489,7 @@ clientWS.on('connect', (connection) => {
 
   connection.on('close', () => {
     WS_STATE = 'WS_CLOSED';
-    clearInterval(WS_INTERVAL, 10);
+    clearInterval(WS_INTERVAL);
     console.log('Websocket sever is closed');
   });
 

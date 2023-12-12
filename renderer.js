@@ -31,6 +31,24 @@ const PIDSetBtn         = document.getElementById("PIDSetBtn");
 const PGainInput        = document.getElementById("PGainInput");
 const IGainInput        = document.getElementById("IGainInput");
 const DGainInput        = document.getElementById("DGainInput");
+const PosMoveBtn        = document.getElementById("PosMoveBtn");
+const PosCtrlInput      = document.getElementById("PosCtrlInput");
+const PosDurInput       = document.getElementById("PosDurInput");
+const TorqueSetInput    = document.getElementById("TorqueSetInput");
+const TorqueSetBtn      = document.getElementById("TorqueSetBtn");
+const VelocitySetInput  = document.getElementById("VelocitySetInput");
+const VelocitySetBtn    = document.getElementById("VelocitySetBtn");
+
+PosMoveBtn.addEventListener('click', () => { // Connect MODBUS Req.
+    const position = PosCtrlInput.value;
+    const duration = PosDurInput.value;
+
+    let data = new Object();
+    data.position  = position;
+    data.duration  = duration;
+
+    window.electronAPI.PosMove(data);
+});
 
 PIDSetBtn.addEventListener('click', () => { // Connect MODBUS Req.
     const PGain = PGainInput.value;
@@ -69,11 +87,21 @@ disconnectBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
 gripperInitBtn.addEventListener ('click', () => {window.electronAPI.gripperInitialize()});
 gripperOpenBtn.addEventListener ('click', () => {window.electronAPI.gripperOpen()});
 gripperCloseBtn.addEventListener('click', () => {window.electronAPI.gripperClose()});
-gripperRepeatBtn.addEventListener('click', () => {window.electronAPI.gripperRepeat()});
+// gripperRepeatBtn.addEventListener('click', () => {window.electronAPI.gripperRepeat()});
 
 writeMBAddressBtn.addEventListener('click', () => {
     const changeMBAddress = changeMBAddressVal.value;
     window.electronAPI.writeMBAddress(changeMBAddress);
+});
+
+TorqueSetBtn.addEventListener('click', () => {
+    const setTorque = TorqueSetInput.value;
+    window.electronAPI.setTorque(setTorque);
+});
+
+VelocitySetBtn.addEventListener('click', () => {
+    const setVelocity = VelocitySetInput.value;
+    window.electronAPI.setVelocity(setVelocity);
 });
 
 writeElAngleBtn.addEventListener('click', () => {window.electronAPI.writeElAngle()});
@@ -97,6 +125,7 @@ function readData() {
 };
 
 dataReceive.onchange = function() {
+    let data = new Object()
     if (dataReceive.checked) {
         data = {dataRepeat: true};
         intervalID = setInterval(readData, 100);
@@ -138,18 +167,18 @@ webSocketBtn.addEventListener('click', () => {
 function webSocketInterval() {
     window.electronAPI.webSocState();
 }
-setInterval(webSocketInterval, 500);
+setInterval(webSocketInterval, 10);
 
-CAN_EnableBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
-    window.electronAPI.CAN_Enable();
-});
+// CAN_EnableBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
+//     window.electronAPI.CAN_Enable();
+// });
 
-CAN_DisableBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
-    window.electronAPI.CAN_Disable();
-});
+// CAN_DisableBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
+//     window.electronAPI.CAN_Disable();
+// });
 
-CAN_InitBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
-    window.electronAPI.CAN_Init();
-});
+// CAN_InitBtn.addEventListener('click', () => { // Disconnect MODBUS Req.
+//     window.electronAPI.CAN_Init();
+// });
 
 

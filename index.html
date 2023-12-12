@@ -28,7 +28,7 @@
     </head>
 
     <body>
-        <ul class="nav">
+        <!-- <ul class="nav">
           <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="#">Active</a>
           </li>
@@ -41,7 +41,7 @@
           <li class="nav-item">
             <a class="nav-link disabled">Disabled</a>
           </li>
-        </ul>
+        </ul> -->
 
         <article class="my-3" id="card" style="margin: 2% 2%">
           <div class="bd-heading sticky-xl-top align-self-start mt-5 mb-3 mt-xl-0 mb-xl-2">
@@ -58,16 +58,16 @@
                   </div>
                   <div class="card-body" align="center">
                     <div>
-                      <label for="bitRate">통신 속도</label>
+                      <label for="bitRate">Baud Rate</label>
                       <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="38400" type="text" id="bitRate">
                       <label for="bitRate">bps</label>
                     </div>
                     <div>
-                      <label for="comPort">USB 포트</label>
+                      <label for="comPort">USB port</label>
                       <input style="width: 100px; text-align: center; margin: 1% 1%;" value="COM13" type="text" id="comPort">
                     </div>
                     <div>
-                      <label for="modbusID">MODBUS Address</label>
+                      <label for="modbusID">Slave Address</label>
                       <input style="width: 100px; text-align: center; margin: 1% 1%;" value="1" type="text" id="modbusID">
                     </div>
                     <button id='findPort' type="button" class="btn btn-outline-dark" style="width: 23%">Find Port</button>
@@ -76,7 +76,7 @@
                     <div>
                       <a id = 'portMessages' style="margin: 1% 0%; font-size: 14px;">Messages</a>
                     </div>
-                    <p class="card-text" style="margin: 1% 0%; font-size: 12px;">작성예시- Bit rate: 38400, USB 포트: COM1</p>
+                    <p class="card-text" style="margin: 1% 0%; font-size: 12px;"></p>
                   </div>
                 </div>
               </div>
@@ -115,13 +115,13 @@
                           </tr>
                           <tr>
                             <td align="left">
-                              <div class="form-check form-switch">
+                              <!-- <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="gripperInitialize" >
                                 <label class="form-check-label" for="gripperInitialize">Gripper Initialize</label>
-                              </div>
+                              </div> -->
                             </td>
                             <td align="Right">Velocity</td>
-                            <td align="center"><a id="grpVel">0 RPM</a></td>
+                            <td align="center"><a id="grpVel">0 rpm</a></td>
                           </tr>
                           <tr>
                             <td align="left">
@@ -135,10 +135,10 @@
                           </tr>
                           <tr>
                             <td align="left">
-                              <div class="form-check form-switch">
+                              <!-- <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="temp" >
                                 <label class="form-check-label" for="pumpONOFF">Temp</label>
-                              </div>
+                              </div> -->
                             </td>
                             <td align="Right">GripperPos</td>
                             <td align="center"><a id="grpPos2">0 %</a></td>
@@ -149,17 +149,17 @@
 
                     <div>
                     <label for="customRange1" class="form-label" min="0" max="100" value="50%"><b>Gripper Position</b></label>
-                    <p align="center">현재 그리퍼 위치 <span id="sliderValue1"></span></p>
+                    <p align="center">Current Gripper Pos <span id="sliderValue1"></span></p>
                     <input id ="grpPosRNG1" type="range" class="form-range">
                     <input id ="grpPosRNG" type="range" class="form-range">
-                    <p align="center">목표 그리퍼 위치: <span id="sliderValue"></span></p>
+                    <p align="center">Target Gripper Pos <span id="sliderValue"></span></p>
                     </div>
                     <div align="center" class="form-check form-switch">
-                    <button id = "gripperInitBtn"  type="button" class="btn btn-outline-dark" style="width: 18%">Initialize</button>
-                    <button id = "gripperOpenBtn"  type="button" class="btn btn-outline-dark" style="width: 18%">Open</button>
-                    <button id = "gripperCloseBtn" type="button" class="btn btn-outline-dark" style="width: 18%">Close</button>
-                    <button id = "gripperRepeatBtn" type="button" class="btn btn-outline-dark" style="width: 18%">Repeat</button>
-                    <a href="#" class="btn btn-primary" style="width: 18%">Go</a>
+                      <button id = "gripperInitBtn"  type="button" class="btn btn-outline-dark" style="width: 18%">Initialize</button>
+                      <button id = "gripperOpenBtn"  type="button" class="btn btn-outline-dark" style="width: 18%">Open</button>
+                      <button id = "gripperCloseBtn" type="button" class="btn btn-outline-dark" style="width: 18%">Close</button>
+                      <!-- <button id = "gripperRepeatBtn" type="button" class="btn btn-outline-dark" style="width: 18%">Repeat</button> -->
+                      <!-- <a href="#" class="btn btn-primary" style="width: 18%">Go</a> -->
                     </div>
                   </div>
                   <div class="card-footer text-body-secondary">
@@ -175,13 +175,29 @@
                 <div class="card">
                   <div class="card-body">
                     <h5 class="card-title"><b>Gripper Setup</b></h5>
-                    <p class="card-text">* 모드버스 슬레이브 ID 변경 및 전기각 수정</p>
+                    <p class="card-text">* Do not touch</p>
+                    <div>
+                      <label>Set Velocity</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="1200" type="text" id="VelocitySetInput">
+                      <button id = "VelocitySetBtn" type="button" class="btn btn-outline-dark" style="width: 20%">Velocity set</button>
+                    </div>
+                    <div>
+                      <label>Position Control</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="10000" type="text" id="PosCtrlInput">
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="1000" type="text" id="PosDurInput">
+                      <button id = "PosMoveBtn" type="button" class="btn btn-outline-dark" style="width: 20%">Move</button>
+                    </div>
                     <div>
                       <label>PID Gain</label>
                       <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="10000" type="text" id="PGainInput">
                       <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="1000" type="text" id="IGainInput">
                       <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="1000" type="text" id="DGainInput">
                       <button id = "PIDSetBtn" type="button" class="btn btn-outline-dark" style="width: 20%">PID Set</button>
+                    </div>
+                    <div>
+                      <label>Set Torque</label>
+                      <input style="width: 100px; height:30px; text-align: center; margin: 1% 1%;" value="100" type="text" id="TorqueSetInput">
+                      <button id = "TorqueSetBtn" type="button" class="btn btn-outline-dark" style="width: 20%">Torque set</button>
                     </div>
                     <div>
                       <label>STM32 System Reset</label>
@@ -220,6 +236,7 @@
                   </ul>
                 </div>
               </div>
+
               <!-- Card 4 -->
               <div class="col">
                 <div class="card">
@@ -242,7 +259,7 @@
 
           </div>
         </article>
-        <div>
+        <!-- <div>
           <h3><b>TCP/IP eCAN Setup</b></h3>
           <table>
             <tr>
@@ -261,7 +278,7 @@
               <td><button id="CAN_InitBtn" type="button" class="btn btn-outline-dark">CAN Initialize</button></td>
             </tr>
           </table>
-        </div>
+        </div> -->
 
         <script src="./renderer.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous">

@@ -23,6 +23,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   CAN_Disable: () => ipcRenderer.send('CAN_Disable'),
   CAN_Init: () => ipcRenderer.send('CAN_Init'),
   setPIDGain: (data) => ipcRenderer.send('setPIDGain', data),
+  PosMove: (data) => ipcRenderer.send('PosMove', data),
+  setTorque: (data) => ipcRenderer.send('setTorque', data),
+  setVelocity: (data) => ipcRenderer.send('setVelocity', data),
 });
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {

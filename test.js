@@ -1,14 +1,5 @@
-let repeatFlag;
+let 강준
 
-repeatFlag = !repeatFlag;
+강준 = '강준'
 
-let intervalID2;
-
-if (repeatFlag) {
-  intervalID2 = setInterval(()=>{
-    MB_SEND_BUFFER.push([GRP_OPEN]);
-    MB_SEND_BUFFER.push([GRP_CLOSE]);
-  }, 5000);
-} else {
-  clearInterval(intervalID2);
-}
+console.log(강준)
